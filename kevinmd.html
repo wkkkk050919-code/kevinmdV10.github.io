@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kévin Markdown 转写器 - 完美自由版 V10.0</title>
+    
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
+    <style>
+        :root {
+            --panel-opacity: 0.85;
+            --panel-blur: 12px;
+        }
+
+        body { 
+            display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
+            background-color: #e9ecef; 
+            /* 默认加载专属照片，同时允许后续通过 JS 覆盖 */
+            background-image: url('IMG_6003.jpg'); 
+            background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+            font-family: STSong, "Songti SC", SimSun, serif; color: #222; 
+            transition: background-image 0.5s ease;
+        }
+        
+        .toolbar, .panel {
+            background-color: rgba(255, 255, 255, var(--panel-opacity)); 
+            backdrop-filter: blur(var(--panel-blur)); -webkit-backdrop-filter: blur(var(--panel-blur));
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .toolbar { 
+            margin-bottom: 15px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 18px; 
+        }
+        
+        .site-title { display: flex; align-items: center; margin-right: auto; }
+        .site-title h1 {
+            font-size: 20px; font-weight: 800; margin: 0; padding: 0; letter-spacing: -0.5px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #ffffff; text-shadow: 0px 2px 10px rgba(0,0,0,0.8); transition: all 0.3s;
+        }
+
+        .toolbar select, .toolbar button, .rich-tools select, .rich-tools button { 
+            padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); outline: none; 
+            background: rgba(255,255,255,0.8); cursor: pointer; font-size: 13px; font-weight: 500;
+            color: #444; transition: all 0.2s; font-family: -apple-system, sans-serif;
+        }
+        
+        .toolbar select:hover, .toolbar button:hover, .rich-tools select:hover, .rich-tools button:hover {
+            background: #fff; border-color: rgba(0,0,0,0.2); box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .slider-group { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); }
+        .slider-group span { font-size: 14px; cursor: default; }
+        input[type="range"] { cursor: pointer; width: 65px; height: 4px; accent-color: #4e4376; }
+
+        .toolbar button.btn-primary { background: #007aff; color: white; border: none; box-shadow: 0 2px 8px rgba(0,122,255,0.25); }
+        .toolbar button.btn-primary:hover { background: #0062cc; transform: translateY(-1px); }
+        .toolbar button.btn-danger { background: #ff3b30; color: white; border: none; box-shadow: 0 2px 8px rgba(255,59,48,0.25); }
+        .toolbar button.btn-danger:hover { background: #cc2e26; transform: translateY(-1px); }
+        
+        .container { display: flex; flex: 1; gap: 20px; overflow: hidden; }
+        .panel { flex: 1; display: flex; flex-direction: column; }
+        
+        .panel-header { 
+            background: rgba(250, 250, 250, 0.4); padding: 10px 16px; font-weight: 600; border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-radius: 12px 12px 0 0; color: #555; display: flex; justify-content: space-between; align-items: center; 
+            font-family: -apple-system, sans-serif; font-size: 13px;
+        }
+        
+        .editor textarea { 
+            flex: 1; width: 100%; padding: 24px; border: none; resize: none; outline: none; font-family: "SF Mono", "Menlo", monospace; font-size: 13px; box-sizing: border-box; line-height: 1.6; background: transparent; color: #333;
+        }
+        
+        .rich-tools { display: flex; gap: 6px; align-items: center; font-weight: normal; flex-wrap: wrap; }
+        .rich-tools select { padding: 4px 8px; }
+        
+        .preview-content { flex: 1; padding: 40px; overflow-y: auto; color: #222; outline: none; background: transparent; font-size: 14px; line-height: 1.6; scroll-behavior: smooth;}
+        .preview-content h1 { font-size: 1.8em; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;}
+        .preview-content h2 { font-size: 1.4em; margin-top: 1em; margin-bottom: 0.5em; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 5px; font-weight: bold;}
+        .preview-content p, .preview-content li { word-wrap: break-word; white-space: pre-wrap; margin-bottom: 0.8em; }
+        .preview-content pre { padding: 14px; border-radius: 8px; overflow-x: auto; background-color: #f8f9fa; border: 1px solid rgba(0,0,0,0.05); color: #383a42; white-space: pre-wrap; word-wrap: break-word; margin: 1em 0; font-size: 0.9em; }
+        .preview-content code { font-family: "SF Mono", Menlo, monospace; background: rgba(0,0,0,0.04); padding: 2px 5px; border-radius: 4px; font-size: 0.9em; color: #e06c75; }
+        .preview-content pre code { background: none; padding: 0; color: inherit; }
+        
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.9em; border-radius: 6px; overflow: hidden; }
+        th, td { border: 1px solid rgba(0,0,0,0.08); padding: 10px 12px; text-align: left; }
+        th { background-color: rgba(0, 0, 0, 0.02); font-weight: 600; }
+        
+        .preview-content p, .preview-content li, .preview-content pre, .preview-content table, .preview-content tr, .preview-content h1, .preview-content h2, .preview-content h3 {
+            page-break-inside: avoid; break-inside: avoid;
+        }
+
+        .font-sans { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+        .font-serif { font-family: STSong, "Songti SC", SimSun, serif; }
+        .font-kaiti { font-family: STKaiti, "Kaiti SC", KaiTi, serif; }
+        .font-mono { font-family: "SF Mono", Menlo, Courier, monospace; }
+        .font-times { font-family: "Times New Roman", Times, serif; }
+        .font-garamond { font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text", "Times New Roman", serif; }
+        .font-georgia { font-family: Georgia, serif; }
+        .font-helvetica { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+        /* --- 全局排版主题风格 --- */
+        .preview-content.theme-modern { line-height: 1.75; color: #334155; }
+        .preview-content.theme-modern h1, .preview-content.theme-modern h2, .preview-content.theme-modern h3 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; border-bottom: none; }
+        .preview-content.theme-modern h1 { font-size: 2.2em; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+        .preview-content.theme-modern h2 { font-size: 1.5em; font-weight: 700; color: #5B6C7D; margin-top: 1.5em; }
+        .preview-content.theme-modern blockquote { border-left: 4px solid #9B6A6C; background: rgba(155, 106, 108, 0.06); padding: 12px 16px; margin: 1em 0; border-radius: 4px; color: #555; }
+        .preview-content.theme-modern table th { background-color: #f8fafc; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        
+        .preview-content.theme-scholar { line-height: 1.5; color: #000; text-align: justify; }
+        .preview-content.theme-scholar h1, .preview-content.theme-scholar h2, .preview-content.theme-scholar h3 { font-family: "Times New Roman", Times, serif; color: #000; }
+        .preview-content.theme-scholar h1 { font-size: 2em; text-align: center; font-weight: bold; margin-bottom: 1em; border-bottom: none; }
+        .preview-content.theme-scholar h2 { font-size: 1.4em; border-bottom: 1px solid #000; padding-bottom: 3px; margin-top: 1.5em; }
+        .preview-content.theme-scholar blockquote { border-left: none; border-left: 3px solid #000; padding-left: 15px; color: #333; font-style: italic; }
+        .preview-content.theme-scholar table { border-top: 2px solid #000; border-bottom: 2px solid #000; border-left: none; border-right: none; border-radius: 0; }
+        .preview-content.theme-scholar table th, .preview-content.theme-scholar table td { border: none; border-bottom: 1px solid #ddd; padding: 8px 10px; }
+        .preview-content.theme-scholar table th { border-bottom: 1px solid #000; background: none; }
+        
+        .preview-content.theme-executive { line-height: 1.6; color: #1a202c; }
+        .preview-content.theme-executive h1 { font-family: Georgia, serif; font-size: 2.2em; font-weight: normal; color: #1A365D; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .preview-content.theme-executive h2 { font-family: Georgia, serif; font-size: 1.3em; color: #2b6cb0; text-transform: uppercase; letter-spacing: 1px; border-bottom: none; margin-top: 1.5em; }
+        .preview-content.theme-executive blockquote { border-left: 4px solid #cbd5e0; background: transparent; padding-left: 15px; color: #4a5568; font-family: Georgia, serif; }
+        .preview-content.theme-executive table th { background-color: #1A365D; color: #fff; border: 1px solid #1A365D; border-radius: 0;}
+        .preview-content.theme-executive table td { border: 1px solid #e2e8f0; }
+        
+        .warning-text { font-size: 12px; color: #ff3b30; font-weight: normal; margin-left: 10px; display: none; }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="toolbar">
+        <div class="site-title"><h1 id="main-title">Kévin MD</h1></div>
+
+        <input type="file" id="bg-upload" accept="image/*" style="display:none;" onchange="changeBackground(event)">
+        <button onclick="document.getElementById('bg-upload').click()" title="更换背景图片">🖼️</button>
+
+        <div class="slider-group" title="调节面板透明度">
+            <span>💧</span>
+            <input type="range" id="opacity-slider" min="0.2" max="1" step="0.05" value="0.85">
+        </div>
+        
+        <div class="slider-group" title="调节背景模糊度">
+            <span>🌫️</span>
+            <input type="range" id="blur-slider" min="0" max="30" step="1" value="12">
+        </div>
+
+        <select id="theme-select" title="全局排版风格">
+            <option value="theme-default">✨ 默认风格</option>
+            <option value="theme-modern">✨ Modern 现代</option>
+            <option value="theme-scholar">✨ Scholar 学术</option>
+            <option value="theme-executive">✨ Executive 商务</option>
+        </select>
+
+        <select id="global-font-select" title="全局排版字体">
+            <optgroup label="中文字体">
+                <option value="font-sans">Aa 标准黑体 (默认)</option>
+                <option value="font-serif">Aa 经典宋体</option>
+                <option value="font-kaiti">Aa 优雅楷体</option>
+            </optgroup>
+            <optgroup label="英文字体 (学术/正式)">
+                <option value="font-times">Aa Times New Roman (经典学术)</option>
+                <option value="font-garamond">Aa Garamond (法式复古)</option>
+                <option value="font-georgia">Aa Georgia (优雅宽体)</option>
+                <option value="font-helvetica">Aa Helvetica (现代无衬线)</option>
+                <option value="font-mono">Aa 技术等宽</option>
+            </optgroup>
+        </select>
+        
+        <select id="margin-select" title="PDF 导出页边距">
+            <option value="15">📏 边距: 15mm</option>
+            <option value="20">📏 边距: 20mm</option>
+            <option value="8">📏 边距: 8mm</option>
+        </select>
+
+        <select id="pdf-bg-select" title="PDF 导出护眼底色">
+            <option value="#FFFFFF">📄 纯白底色</option>
+            <option value="#F4F1EA">📄 燕麦护眼</option>
+            <option value="#E8EFEA">📄 浅鼠尾草</option>
+            <option value="#EBF0F5">📄 雾霾灰蓝</option>
+            <option value="#FAF0E6">📄 浅粉豆沙</option>
+        </select>
+
+        <button onclick="exportMD()" class="btn-primary" title="下载 .md 源文件">⬇️ MD</button>
+        <button onclick="exportPDF()" class="btn-danger" title="导出防裁切、带双语水印的 PDF">📥 PDF</button>
+        <span class="warning-text" id="edit-warning">⚠️ 源文件修改，批注已刷新。</span>
+    </div>
+
+    <div class="container">
+        <div class="panel editor">
+            <div class="panel-header">📝 编辑区</div>
+            <textarea id="md-input" placeholder="# Document Title
+Location: RUC Suzhou Campus
+
+Type your Markdown code here..."></textarea>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header" style="flex-wrap: wrap; gap: 8px;">
+                <span title="双向同步滚动已开启">👁️ 预览与精修 (同步滚动中)</span>
+                
+                <div class="rich-tools">
+                    <select title="局部字体" onchange="formatText('fontName', this.value); this.selectedIndex=0;">
+                        <option value="">Aa 字体...</option>
+                        <optgroup label="中文">
+                            <option value="STSong, SimSun, serif">宋体</option>
+                            <option value="STKaiti, KaiTi, serif">楷体</option>
+                            <option value="-apple-system, sans-serif">黑体</option>
+                        </optgroup>
+                        <optgroup label="英文 (正式 & 学术)">
+                            <option value="Times New Roman, serif">Times New Roman</option>
+                            <option value="Garamond, serif">Garamond</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="Helvetica, Arial, sans-serif">Helvetica / Arial</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                            <option value="Courier New, monospace">Courier (代码)</option>
+                        </optgroup>
+                        <optgroup label="趣味字体">
+                            <option value="Comic Sans MS">Comic Sans</option>
+                            <option value="Impact, sans-serif">Impact</option>
+                        </optgroup>
+                    </select>
+
+                    <select title="局部字号" onchange="formatText('fontSize', this.value); this.selectedIndex=0;">
+                        <option value="">T 字号...</option>
+                        <option value="1">极小 (8pt)</option>
+                        <option value="2">偏小 (10pt)</option>
+                        <option value="3">正常 (12pt)</option>
+                        <option value="4">中等 (14pt)</option>
+                        <option value="5">偏大 (18pt)</option>
+                        <option value="6">特大 (24pt)</option>
+                        <option value="7">巨大 (36pt)</option>
+                    </select>
+                    
+                    <select title="局部字色" onchange="formatText('foreColor', this.value); this.selectedIndex=0;">
+                        <option value="">🎨 颜色...</option>
+                        <optgroup label="学术与财务">
+                            <option value="#000000">纯黑 (Black)</option>
+                            <option value="#1A365D">深藏青 (Navy)</option>
+                            <option value="#7F1D1D">勃艮第红 (Burgundy)</option>
+                            <option value="#065F46">深林绿 (Forest)</option>
+                            <option value="#4B5563">高级灰 (Slate)</option>
+                        </optgroup>
+                        <optgroup label="高级莫兰迪">
+                            <option value="#5B6C7D">雾霾蓝</option>
+                            <option value="#9B6A6C">豆沙红</option>
+                            <option value="#737A59">橄榄绿</option>
+                            <option value="#C68A6B">陶土橘</option>
+                        </optgroup>
+                        <optgroup label="明亮警示色">
+                            <option value="#FF3B30">正红</option>
+                            <option value="#007AFF">明蓝</option>
+                        </optgroup>
+                    </select>
+
+                    <select title="局部高亮" onchange="formatText('backColor', this.value); this.selectedIndex=0;">
+                        <option value="">🖍️ 批注...</option>
+                        <optgroup label="明亮马克笔">
+                            <option value="#FFFF00">亮明黄</option>
+                            <option value="#00FF00">荧光绿</option>
+                            <option value="#00FFFF">青色</option>
+                            <option value="#FF00FF">品红</option>
+                        </optgroup>
+                        <optgroup label="温和护眼底色">
+                            <option value="#E6E2D6">燕麦米</option>
+                            <option value="#D9E0E5">云水蓝</option>
+                            <option value="#E8D7D8">枯玫瑰</option>
+                            <option value="#D8DFD6">鼠尾草</option>
+                            <option value="#FFF9C4">奶油黄</option>
+                        </optgroup>
+                    </select>
+                    
+                    <button onclick="formatText('bold')" title="加粗"><b>B</b></button>
+                    <button onclick="formatText('italic')" title="斜体"><i>I</i></button>
+                    <button onclick="formatText('underline')" title="下划线"><u>U</u></button>
+                    <button onclick="formatText('removeFormat')" title="清除选中格式">🚫</button>
+                </div>
+            </div>
+            <div class="preview-content font-sans" id="preview-box" contenteditable="true" spellcheck="false"></div>
+        </div>
+    </div>
+
+    <script src="https://fastly.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
+    <script>
+        function changeBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.body.style.backgroundImage = `url('${e.target.result}')`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        const root = document.documentElement;
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            root.style.setProperty('--panel-opacity', e.target.value);
+        });
+        document.getElementById('blur-slider').addEventListener('input', (e) => {
+            root.style.setProperty('--panel-blur', e.target.value + 'px');
+        });
+
+        marked.setOptions({
+            highlight: function (code, lang) {
+                if (typeof hljs !== 'undefined') {
+                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    return hljs.highlight(code, { language }).value;
+                }
+                return code;
+            }
+        });
+
+        const mdInput = document.getElementById('md-input');
+        const previewBox = document.getElementById('preview-box');
+        const warningText = document.getElementById('edit-warning');
+        let isUserEditingHtml = false;
+
+        let isSyncingLeft = false;
+        let isSyncingRight = false;
+
+        mdInput.addEventListener('scroll', function() {
+            if (!isSyncingLeft) {
+                isSyncingRight = true;
+                const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                previewBox.scrollTop = percentage * (previewBox.scrollHeight - previewBox.clientHeight);
+            }
+            isSyncingLeft = false;
+        });
+
+        previewBox.addEventListener('scroll', function() {
+            if (!isSyncingRight) {
+                isSyncingLeft = true;
+                const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                mdInput.scrollTop = percentage * (mdInput.scrollHeight - mdInput.clientHeight);
+            }
+            isSyncingRight = false;
+        });
+
+        function formatText(command, value = null) {
+            previewBox.focus();
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0 || selection.toString().trim().length === 0) {
+                return alert("💡 请先在右侧面板用鼠标选中需要调整的文字。");
+            }
+            
+            isUserEditingHtml = true; 
+            document.execCommand('styleWithCSS', false, true);
+            
+            if (command === 'backColor' && !document.queryCommandSupported('backColor')) {
+                command = 'hiliteColor'; 
+            }
+            document.execCommand(command, false, value);
+            previewBox.focus();
+        }
+
+        function renderContent() {
+            if (typeof marked === 'undefined') return;
+            if (isUserEditingHtml) {
+                warningText.style.display = 'inline';
+                setTimeout(() => { warningText.style.display = 'none'; }, 4000);
+                isUserEditingHtml = false;
+            }
+
+            previewBox.innerHTML = marked.parse(mdInput.value);
+            
+            if (window.renderMathInElement) {
+                renderMathInElement(previewBox, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        mdInput.addEventListener('input', renderContent);
+
+        document.getElementById('global-font-select').addEventListener('change', (e) => {
+            Array.from(previewBox.classList).forEach(cls => {
+                if (cls.startsWith('font-')) previewBox.classList.remove(cls);
+            });
+            if(e.target.value) previewBox.classList.add(e.target.value);
+        });
+
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            Array.from(previewBox.classList).forEach(cls => {
+                if (cls.startsWith('theme-')) previewBox.classList.remove(cls);
+            });
+            if (e.target.value !== 'theme-default') {
+                previewBox.classList.add(e.target.value);
+            }
+        });
+
+        function exportMD() {
+            if (!mdInput.value) return alert("内容为空！");
+            const blob = new Blob([mdInput.value], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Kévin_notes.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function getWatermarkImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1600; 
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#a0a0a0'; 
+            ctx.textAlign = 'center';
+            
+            ctx.font = '28px STSong, SimSun, sans-serif';
+            ctx.fillText('由Kévin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
+            
+            ctx.font = 'italic 24px STSong, SimSun, sans-serif';
+            ctx.fillText('Généré par le transcripteur Kévin Markdown. Bon courage à vous !', 800, 130);
+            
+            return canvas.toDataURL('image/png');
+        }
+
+        function exportPDF() {
+            if (typeof html2pdf === 'undefined') return alert("渲染引擎加载中，请稍候...");
+            if (!previewBox.innerHTML) return alert("请先输入内容");
+            
+            const marginValue = parseFloat(document.getElementById('margin-select').value);
+            const pdfBgColor = document.getElementById('pdf-bg-select').value;
+            
+            // --- 核心修复区域：大幅提升清晰度参数 ---
+            const opt = {
+                margin: [marginValue, marginValue, marginValue + 15, marginValue],
+                filename: 'Kévin_Document.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                pagebreak: { mode: ['css', 'legacy'] }, 
+                html2canvas: { 
+                    scale: 5,               // 将渲染比例提升到 5（相当于超清截图）
+                    dpi: 300,               // 设定为打印级 DPI
+                    useCORS: true, 
+                    letterRendering: true, 
+                    backgroundColor: pdfBgColor 
+                }, 
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true          // 开启底层 PDF 压缩避免文件过大
+                }
+            };
+
+            previewBox.style.padding = '0'; 
+            const originalBg = previewBox.style.backgroundColor;
+            previewBox.style.backgroundColor = pdfBgColor; 
+            
+            html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                const watermarkImg = getWatermarkImage();
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
+                }
+                
+                previewBox.style.padding = '40px'; 
+                previewBox.style.backgroundColor = originalBg;
+            }).save();
+        }
+    </script>
+</body>
+</html>
