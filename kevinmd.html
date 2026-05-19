@@ -125,6 +125,20 @@
         .preview-content.theme-executive table td { border: 1px solid #e2e8f0; }
         
         .warning-text { font-size: 12px; color: #ff3b30; font-weight: normal; margin-left: 10px; display: none; }
+
+        /* --- 确保长公式可以横向滚动，不破坏整体布局 --- */
+        .katex-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 5px;
+        }
+        .katex-display::-webkit-scrollbar {
+            height: 6px;
+        }
+        .katex-display::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.15);
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body class="font-sans">
@@ -190,7 +204,7 @@
         <div class="panel editor">
             <div class="panel-header">📝 编辑区</div>
             <textarea id="md-input" placeholder="# Document Title
-Location: RUC Suzhou Campus
+Location: Xiuyuan Building, RUC Suzhou
 
 Type your Markdown code here..."></textarea>
         </div>
@@ -367,15 +381,40 @@ Type your Markdown code here..."></textarea>
                 isUserEditingHtml = false;
             }
 
-            previewBox.innerHTML = marked.parse(mdInput.value);
+            let rawText = mdInput.value;
+            const mathBlocks = [];
+
+            // 1. 提取并保护 $$ ... $$ 块级公式
+            rawText = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+                mathBlocks.push(match);
+                return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+            });
+
+            // 2. 提取并保护 $ ... $ 行内公式
+            rawText = rawText.replace(/\$((?:\\.|[^$\\])*)\$/g, (match) => {
+                mathBlocks.push(match);
+                return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+            });
+
+            // 3. 用 Marked.js 解析剩余的纯 Markdown
+            let parsedHtml = marked.parse(rawText);
+
+            // 4. 将公式无损替换回原位
+            mathBlocks.forEach((block, index) => {
+                parsedHtml = parsedHtml.replace(`@@MATH_BLOCK_${index}@@`, block);
+            });
+
+            previewBox.innerHTML = parsedHtml;
             
+            // 5. 运行 KaTeX 渲染
             if (window.renderMathInElement) {
                 renderMathInElement(previewBox, {
                     delimiters: [
                         {left: '$$', right: '$$', display: true},
                         {left: '$', right: '$', display: false}
                     ],
-                    throwOnError: false
+                    throwOnError: false,
+                    output: 'html-mathml'
                 });
             }
         }
@@ -434,15 +473,14 @@ Type your Markdown code here..."></textarea>
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
             
-            // --- 核心修复区域：大幅提升清晰度参数 ---
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: 'Kévin_Document.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 pagebreak: { mode: ['css', 'legacy'] }, 
                 html2canvas: { 
-                    scale: 5,               // 将渲染比例提升到 5（相当于超清截图）
-                    dpi: 300,               // 设定为打印级 DPI
+                    scale: 5,               
+                    dpi: 300,               
                     useCORS: true, 
                     letterRendering: true, 
                     backgroundColor: pdfBgColor 
@@ -451,7 +489,7 @@ Type your Markdown code here..."></textarea>
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true          // 开启底层 PDF 压缩避免文件过大
+                    compress: true          
                 }
             };
 
