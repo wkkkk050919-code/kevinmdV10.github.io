@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kévin Markdown 转写器 - 完美自由版 V10.0</title>
+    <title>Kévin Markdown 转写器 - 完美自由版 V12.6</title>
     
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -17,7 +17,6 @@
         body { 
             display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
             background-color: #e9ecef; 
-            /* 默认加载专属照片，同时允许后续通过 JS 覆盖 */
             background-image: url('IMG_6003.jpg'); 
             background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
             font-family: STSong, "Songti SC", SimSun, serif; color: #222; 
@@ -74,11 +73,21 @@
         
         .rich-tools { display: flex; gap: 6px; align-items: center; font-weight: normal; flex-wrap: wrap; }
         .rich-tools select { padding: 4px 8px; }
+        .tool-separator { width: 1px; height: 16px; background: rgba(0,0,0,0.12); margin: 0 2px; }
         
         .preview-content { flex: 1; padding: 40px; overflow-y: auto; color: #222; outline: none; background: transparent; font-size: 14px; line-height: 1.6; scroll-behavior: smooth;}
         .preview-content h1 { font-size: 1.8em; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;}
         .preview-content h2 { font-size: 1.4em; margin-top: 1em; margin-bottom: 0.5em; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 5px; font-weight: bold;}
         .preview-content p, .preview-content li { word-wrap: break-word; white-space: pre-wrap; margin-bottom: 0.8em; }
+        
+        /* 优化图片基础样式，默认居中且块级化，方便精准控制 */
+        .preview-content img { 
+            max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            cursor: pointer; border: 2px solid transparent; transition: border 0.2s, margin 0.1s; 
+            display: block; margin: 12px auto; page-break-inside: avoid; break-inside: avoid;
+        }
+        .preview-content img.selected-img { border-color: #007aff; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
+
         .preview-content pre { padding: 14px; border-radius: 8px; overflow-x: auto; background-color: #f8f9fa; border: 1px solid rgba(0,0,0,0.05); color: #383a42; white-space: pre-wrap; word-wrap: break-word; margin: 1em 0; font-size: 0.9em; }
         .preview-content code { font-family: "SF Mono", Menlo, monospace; background: rgba(0,0,0,0.04); padding: 2px 5px; border-radius: 4px; font-size: 0.9em; color: #e06c75; }
         .preview-content pre code { background: none; padding: 0; color: inherit; }
@@ -125,20 +134,36 @@
         .preview-content.theme-executive table td { border: 1px solid #e2e8f0; }
         
         .warning-text { font-size: 12px; color: #ff3b30; font-weight: normal; margin-left: 10px; display: none; }
+        .lock-status { font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .lock-false { background: rgba(0,122,255,0.1); color: #007aff; }
+        .lock-true { background: rgba(255,59,48,0.1); color: #ff3b30; }
 
-        /* --- 确保长公式可以横向滚动，不破坏整体布局 --- */
-        .katex-display {
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 5px;
+        /* 图片微调浮动面板 */
+        .img-control-panel {
+            display: none; position: absolute; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1); padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 8px; align-items: center; z-index: 1001; font-family: -apple-system, sans-serif; font-size: 12px;
         }
-        .katex-display::-webkit-scrollbar {
-            height: 6px;
+        .img-control-panel input[type="range"] { width: 80px; }
+        .img-control-panel button { padding: 4px 8px; font-size: 11px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+        .img-control-panel button:hover { background: #f0f0f0; border-color: #999; }
+
+        /* 弹出框 */
+        .img-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6); padding: 20px; border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 1000; width: 320px;
+            font-family: -apple-system, sans-serif;
         }
-        .katex-display::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.15);
-            border-radius: 3px;
-        }
+        .img-modal h4 { margin: 0 0 12px 0; color: #333; font-size: 15px; }
+        .img-modal input[type="text"] { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.15); box-sizing: border-box; margin-bottom: 12px; outline: none; font-size: 13px; }
+        .img-modal-btns { display: flex; justify-content: flex-end; gap: 8px; }
+        .img-modal-overlay { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.2); z-index:999; }
+
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding-bottom: 5px; }
+        .katex-display::-webkit-scrollbar { height: 6px; }
+        .katex-display::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
     </style>
 </head>
 <body class="font-sans">
@@ -211,9 +236,27 @@ Type your Markdown code here..."></textarea>
         
         <div class="panel">
             <div class="panel-header" style="flex-wrap: wrap; gap: 8px;">
-                <span title="双向同步滚动已开启">👁️ 预览与精修 (同步滚动中)</span>
+                <div>
+                    <span>👁️ 预览与精修区</span>
+                    <button onclick="toggleLock()" id="lock-btn" style="padding:2px 8px; font-size:11px; margin-left:8px;">🔒 锁定同步(开始自由精修)</button>
+                    <span id="lock-indicator" class="lock-status lock-false">同步中</span>
+                </div>
                 
                 <div class="rich-tools">
+                    <button onclick="formatText('undo')" title="撤销">↩️</button>
+                    <button onclick="formatText('redo')" title="重做">↪️</button>
+                    <div class="tool-separator"></div>
+
+                    <button onclick="formatText('justifyLeft')" title="左对齐">FormatAlignLeft</button>
+                    <button onclick="formatText('justifyCenter')" title="居中对齐">FormatAlignCenter</button>
+                    <button onclick="formatText('justifyRight')" title="右对齐">FormatAlignRight</button>
+                    <div class="tool-separator"></div>
+
+                    <input type="file" id="img-local-insert" accept="image/*" style="display:none;" onchange="insertLocalImage(event)">
+                    <button onclick="document.getElementById('img-local-insert').click()" title="插入本地图片">🖼️ 本地</button>
+                    <button onclick="openImgUrlModal()" title="插入网络图片">🔗 网络</button>
+                    <div class="tool-separator"></div>
+
                     <select title="局部字体" onchange="formatText('fontName', this.value); this.selectedIndex=0;">
                         <option value="">Aa 字体...</option>
                         <optgroup label="中文">
@@ -294,6 +337,27 @@ Type your Markdown code here..."></textarea>
         </div>
     </div>
 
+    <div class="img-control-panel" id="img-ctrl">
+        <span>大小: <span id="img-width-val">80</span>%</span>
+        <input type="range" id="img-width-slider" min="10" max="100" value="80">
+        <div style="width:1px; height:14px; background:rgba(0,0,0,0.15); margin:0 4px;"></div>
+        <button onclick="setImgAlign('left')">左对齐</button>
+        <button onclick="setImgAlign('center')">居中</button>
+        <button onclick="setImgAlign('right')">右对齐</button>
+        <div style="width:1px; height:14px; background:rgba(0,0,0,0.15); margin:0 4px;"></div>
+        <button onclick="deleteSelectedImg()" style="color:#ff3b30; border-color: rgba(255,59,48,0.2);">删除</button>
+    </div>
+
+    <div class="img-modal-overlay" id="modal-overlay" onclick="closeImgUrlModal()"></div>
+    <div class="img-modal" id="img-modal">
+        <h4>插入网络图片链接</h4>
+        <input type="text" id="img-url-input" placeholder="https://example.com/image.jpg">
+        <div class="img-modal-btns">
+            <button onclick="closeImgUrlModal()" style="background:none; border:none; color:#666;">取消</button>
+            <button onclick="insertNetworkImage()" class="btn-primary" style="padding:4px 12px;">确定</button>
+        </div>
+    </div>
+
     <script src="https://fastly.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
@@ -301,24 +365,22 @@ Type your Markdown code here..."></textarea>
     <script src="https://fastly.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
     <script>
+        let isLocked = false;
+        let activeImage = null;
+        let isUserEditingHtml = false;
+
         function changeBackground(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.body.style.backgroundImage = `url('${e.target.result}')`;
-                };
+                reader.onload = function(e) { document.body.style.backgroundImage = `url('${e.target.result}')`; };
                 reader.readAsDataURL(file);
             }
         }
 
         const root = document.documentElement;
-        document.getElementById('opacity-slider').addEventListener('input', (e) => {
-            root.style.setProperty('--panel-opacity', e.target.value);
-        });
-        document.getElementById('blur-slider').addEventListener('input', (e) => {
-            root.style.setProperty('--panel-blur', e.target.value + 'px');
-        });
+        document.getElementById('opacity-slider').addEventListener('input', (e) => { root.style.setProperty('--panel-opacity', e.target.value); });
+        document.getElementById('blur-slider').addEventListener('input', (e) => { root.style.setProperty('--panel-blur', e.target.value + 'px'); });
 
         marked.setOptions({
             highlight: function (code, lang) {
@@ -333,22 +395,18 @@ Type your Markdown code here..."></textarea>
         const mdInput = document.getElementById('md-input');
         const previewBox = document.getElementById('preview-box');
         const warningText = document.getElementById('edit-warning');
-        let isUserEditingHtml = false;
 
-        let isSyncingLeft = false;
-        let isSyncingRight = false;
-
+        let isSyncingLeft = false; let isSyncingRight = false;
         mdInput.addEventListener('scroll', function() {
-            if (!isSyncingLeft) {
+            if (!isSyncingLeft && !isLocked) {
                 isSyncingRight = true;
                 const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
                 previewBox.scrollTop = percentage * (previewBox.scrollHeight - previewBox.clientHeight);
             }
             isSyncingLeft = false;
         });
-
         previewBox.addEventListener('scroll', function() {
-            if (!isSyncingRight) {
+            if (!isSyncingRight && !isLocked) {
                 isSyncingLeft = true;
                 const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
                 mdInput.scrollTop = percentage * (mdInput.scrollHeight - mdInput.clientHeight);
@@ -356,16 +414,37 @@ Type your Markdown code here..."></textarea>
             isSyncingRight = false;
         });
 
+        function toggleLock() {
+            isLocked = !isLocked;
+            const btn = document.getElementById('lock-btn');
+            const indicator = document.getElementById('lock-indicator');
+            if (isLocked) {
+                btn.innerText = "🔓 解除锁定(恢复Markdown同步)";
+                indicator.innerText = "自由精修中";
+                indicator.className = "lock-status lock-true";
+            } else {
+                btn.innerText = "🔒 锁定同步(开始自由精修)";
+                indicator.innerText = "同步中";
+                indicator.className = "lock-status lock-false";
+                renderContent();
+            }
+        }
+
         function formatText(command, value = null) {
             previewBox.focus();
-            const selection = window.getSelection();
-            if (selection.rangeCount === 0 || selection.toString().trim().length === 0) {
-                return alert("💡 请先在右侧面板用鼠标选中需要调整的文字。");
+            const bypassSelectionCheck = ['undo', 'redo', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'].includes(command);
+            if (!bypassSelectionCheck) {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0 || selection.toString().trim().length === 0) {
+                    return alert("💡 请先在右侧面板用鼠标选中需要调整的文字。");
+                }
             }
-            
-            isUserEditingHtml = true; 
+
+            if (!isLocked && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'backColor', 'foreColor', 'fontName', 'fontSize'].includes(command)) {
+                isUserEditingHtml = true;
+            }
+
             document.execCommand('styleWithCSS', false, true);
-            
             if (command === 'backColor' && !document.queryCommandSupported('backColor')) {
                 command = 'hiliteColor'; 
             }
@@ -373,8 +452,122 @@ Type your Markdown code here..."></textarea>
             previewBox.focus();
         }
 
+        // 直接插入图片，规避不稳定的 wrapper 容器
+        function rawInsertImage(src) {
+            if (!isLocked) toggleLock(); 
+            previewBox.focus();
+            const uniqueId = 'img_' + Date.now();
+            const imgHtml = `<img src="${src}" id="${uniqueId}" style="width: 80%; display: block; margin: 12px auto;" /><p><br></p>`;
+            document.execCommand('insertHTML', false, imgHtml);
+            setTimeout(() => {
+                const imgElement = document.getElementById(uniqueId);
+                if (imgElement) setupImageEvent(imgElement);
+            }, 100);
+        }
+
+        function insertLocalImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { rawInsertImage(e.target.result); };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = '';
+        }
+
+        function openImgUrlModal() {
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('img-modal').style.display = 'block';
+            document.getElementById('img-url-input').focus();
+        }
+        function closeImgUrlModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('img-modal').style.display = 'none';
+            document.getElementById('img-url-input').value = '';
+        }
+        function insertNetworkImage() {
+            const url = document.getElementById('img-url-input').value.trim();
+            if (url) rawInsertImage(url);
+            closeImgUrlModal();
+        }
+
+        // 核心图片事件绑定与精确定位
+        function setupImageEvent(img) {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (activeImage) activeImage.classList.remove('selected-img');
+                activeImage = img;
+                activeImage.classList.add('selected-img');
+                
+                const rect = img.getBoundingClientRect();
+                const containerRect = previewBox.getBoundingClientRect();
+                const ctrlPanel = document.getElementById('img-ctrl');
+                ctrlPanel.style.display = 'flex';
+                
+                // 将浮动控制条精确定位在图片上方中央
+                ctrlPanel.style.left = `${rect.left + window.scrollX + (rect.width - ctrlPanel.offsetWidth)/2}px`;
+                ctrlPanel.style.top = `${rect.top + window.scrollY - 50}px`;
+                
+                const currentWidth = img.style.width ? parseInt(img.style.width) : 80;
+                document.getElementById('img-width-slider').value = currentWidth;
+                document.getElementById('img-width-val').innerText = currentWidth;
+            });
+        }
+
+        document.addEventListener('click', function() {
+            if (activeImage) { activeImage.classList.remove('selected-img'); activeImage = null; }
+            document.getElementById('img-ctrl').style.display = 'none';
+        });
+
+        document.getElementById('img-width-slider').addEventListener('input', function(e) {
+            if (activeImage) {
+                const val = e.target.value;
+                activeImage.style.width = val + '%';
+                document.getElementById('img-width-val').innerText = val;
+            }
+        });
+
+        // 核心修复：通过对 img 直接操作样式完成百分之百有效的物理对齐
+        function setImgAlign(align) {
+            if (activeImage) {
+                if (align === 'left') {
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px auto 12px 0';
+                } else if (align === 'right') {
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px 0 12px auto';
+                } else { // center
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px auto';
+                }
+                
+                // 对齐后动态刷新控制条的位置
+                setTimeout(() => {
+                    const rect = activeImage.getBoundingClientRect();
+                    const ctrlPanel = document.getElementById('img-ctrl');
+                    ctrlPanel.style.left = `${rect.left + window.scrollX + (rect.width - ctrlPanel.offsetWidth)/2}px`;
+                    ctrlPanel.style.top = `${rect.top + window.scrollY - 50}px`;
+                }, 60);
+            }
+        }
+
+        function deleteSelectedImg() {
+            if (activeImage) {
+                activeImage.remove();
+                document.getElementById('img-ctrl').style.display = 'none';
+                activeImage = null;
+            }
+        }
+
+        function bindExistingImages() {
+            const imgs = previewBox.getElementsByTagName('img');
+            for (let img of imgs) {
+                setupImageEvent(img);
+            }
+        }
+
         function renderContent() {
-            if (typeof marked === 'undefined') return;
+            if (typeof marked === 'undefined' || isLocked) return;
             if (isUserEditingHtml) {
                 warningText.style.display = 'inline';
                 setTimeout(() => { warningText.style.display = 'none'; }, 4000);
@@ -384,29 +577,14 @@ Type your Markdown code here..."></textarea>
             let rawText = mdInput.value;
             const mathBlocks = [];
 
-            // 1. 提取并保护 $$ ... $$ 块级公式
-            rawText = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-                mathBlocks.push(match);
-                return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
-            });
+            rawText = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match) => { mathBlocks.push(match); return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`; });
+            rawText = rawText.replace(/\$((?:\\.|[^$\\])*)\$/g, (match) => { mathBlocks.push(match); return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`; });
 
-            // 2. 提取并保护 $ ... $ 行内公式
-            rawText = rawText.replace(/\$((?:\\.|[^$\\])*)\$/g, (match) => {
-                mathBlocks.push(match);
-                return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
-            });
-
-            // 3. 用 Marked.js 解析剩余的纯 Markdown
             let parsedHtml = marked.parse(rawText);
-
-            // 4. 将公式无损替换回原位
-            mathBlocks.forEach((block, index) => {
-                parsedHtml = parsedHtml.replace(`@@MATH_BLOCK_${index}@@`, block);
-            });
+            mathBlocks.forEach((block, index) => { parsedHtml = parsedHtml.replace(`@@MATH_BLOCK_${index}@@`, block); });
 
             previewBox.innerHTML = parsedHtml;
             
-            // 5. 运行 KaTeX 渲染
             if (window.renderMathInElement) {
                 renderMathInElement(previewBox, {
                     delimiters: [
@@ -417,24 +595,19 @@ Type your Markdown code here..."></textarea>
                     output: 'html-mathml'
                 });
             }
+            bindExistingImages();
         }
 
         mdInput.addEventListener('input', renderContent);
 
         document.getElementById('global-font-select').addEventListener('change', (e) => {
-            Array.from(previewBox.classList).forEach(cls => {
-                if (cls.startsWith('font-')) previewBox.classList.remove(cls);
-            });
+            Array.from(previewBox.classList).forEach(cls => { if (cls.startsWith('font-')) previewBox.classList.remove(cls); });
             if(e.target.value) previewBox.classList.add(e.target.value);
         });
 
         document.getElementById('theme-select').addEventListener('change', (e) => {
-            Array.from(previewBox.classList).forEach(cls => {
-                if (cls.startsWith('theme-')) previewBox.classList.remove(cls);
-            });
-            if (e.target.value !== 'theme-default') {
-                previewBox.classList.add(e.target.value);
-            }
+            Array.from(previewBox.classList).forEach(cls => { if (cls.startsWith('theme-')) previewBox.classList.remove(cls); });
+            if (e.target.value !== 'theme-default') previewBox.classList.add(e.target.value);
         });
 
         function exportMD() {
@@ -442,27 +615,14 @@ Type your Markdown code here..."></textarea>
             const blob = new Blob([mdInput.value], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Kévin_notes.md';
-            a.click();
-            URL.revokeObjectURL(url);
+            a.href = url; a.download = 'Kévin_notes.md'; a.click(); URL.revokeObjectURL(url);
         }
 
         function getWatermarkImage() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1600; 
-            canvas.height = 200;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#a0a0a0'; 
-            ctx.textAlign = 'center';
-            
-            ctx.font = '28px STSong, SimSun, sans-serif';
-            ctx.fillText('由Kévin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
-            
-            ctx.font = 'italic 24px STSong, SimSun, sans-serif';
-            ctx.fillText('Généré par le transcripteur Kévin Markdown. Bon courage à vous !', 800, 130);
-            
+            const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 200;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#a0a0a0'; ctx.textAlign = 'center';
+            ctx.font = '28px STSong, SimSun, sans-serif'; ctx.fillText('由Kévin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
+            ctx.font = 'italic 24px STSong, SimSun, sans-serif'; ctx.fillText('Généré par le transcripteur Kévin Markdown. Bon courage à vous !', 800, 130);
             return canvas.toDataURL('image/png');
         }
 
@@ -478,19 +638,8 @@ Type your Markdown code here..."></textarea>
                 filename: 'Kévin_Document.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 pagebreak: { mode: ['css', 'legacy'] }, 
-                html2canvas: { 
-                    scale: 5,               
-                    dpi: 300,               
-                    useCORS: true, 
-                    letterRendering: true, 
-                    backgroundColor: pdfBgColor 
-                }, 
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    compress: true          
-                }
+                html2canvas: { scale: 4, dpi: 300, useCORS: true, letterRendering: true, backgroundColor: pdfBgColor }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
             previewBox.style.padding = '0'; 
