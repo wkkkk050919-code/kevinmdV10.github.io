@@ -327,8 +327,8 @@ Type your Markdown code here..."></textarea>
                         </optgroup>
                     </select>
 
-                    <select title="修改段落层级" onchange="formatText('formatBlock', this.value); this.selectedIndex=0;">
-                        <option value="">垂直层级...</option>
+                    <select title="修改标题层级" onchange="formatText('formatBlock', this.value); this.selectedIndex=0;">
+                        <option value="">标题层级...</option>
                         <option value="<h1>">H1 一级标题</option>
                         <option value="<h2>">H2 二级标题</option>
                         <option value="<h3>">H3 三级标题</option>
@@ -337,6 +337,9 @@ Type your Markdown code here..."></textarea>
                         <option value="<h6>">H6 六级标题</option>
                         <option value="<p>">P 普通正文</option>
                     </select>
+
+                    <button onclick="formatText('indent')" title="把选定段落变为上一个段落的子层级">➡️ 缩进子层级</button>
+                    <button onclick="formatText('outdent')" title="提升选定段落的主层级位置">⬅️ 提升主层级</button>
                     
                     <button onclick="formatText('bold')" title="加粗"><b>B</b></button>
                     <button onclick="formatText('italic')" title="斜体"><i>I</i></button>
@@ -451,7 +454,7 @@ Type your Markdown code here..."></textarea>
                 }
             }
 
-            if (!isLocked && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'backColor', 'foreColor', 'fontName', 'fontSize', 'formatBlock'].includes(command)) {
+            if (!isLocked && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'backColor', 'foreColor', 'fontName', 'fontSize', 'formatBlock', 'indent', 'outdent'].includes(command)) {
                 isUserEditingHtml = true;
             }
 
