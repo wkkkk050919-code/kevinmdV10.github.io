@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义电子木鱼 - 完整版</title>
+    <style>
+        /* 柔和的莫兰迪色系动态背景 */
+        @keyframes morandi-bg {
+            0% { background-color: #b5c1b4; } /* 灰绿 */
+            25% { background-color: #94a7ae; } /* 雾霾蓝 */
+            50% { background-color: #c5afa4; } /* 灰粉 */
+            75% { background-color: #b8a487; } /* 陶土 */
+            100% { background-color: #b5c1b4; }
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: morandi-bg 15s infinite ease-in-out;
+            font-family: 'PingFang SC', 'STHeiti', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 顶部计数展示 */
+        .score-board {
+            position: absolute;
+            top: 10%;
+            font-size: 28px;
+            color: #444;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 木鱼容器 */
+        .muyu-container {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.05s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 300px;
+            height: 300px;
+            /* 稍微往上偏一点，给底部控制面板留空间 */
+            margin-bottom: 50px; 
+        }
+
+        /* 敲击时的缩放反馈 */
+        .muyu-container:active {
+            transform: scale(0.85);
+        }
+
+        #muyu-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.15));
+        }
+
+        /* 飘字动画 */
+        .floating-text {
+            position: absolute;
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+            animation: float-up 0.8s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.3); }
+        }
+
+        /* 底部设置面板 */
+        .settings-panel {
+            position: absolute;
+            bottom: 3%;
+            width: 90%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #444;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        input[type="text"] {
+            border: none;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 6px 10px;
+            border-radius: 6px;
+            outline: none;
+            color: #333;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        /* 按钮统一通用样式 */
+        .btn {
+            border: 1px solid #777;
+            background: transparent;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            color: #444;
+        }
+        .btn:hover { background: rgba(255,255,255,0.6); }
+
+        /* 文件上传特殊样式 */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        #file-input {
+            position: absolute;
+            left: 0; top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%; height: 100%;
+        }
+
+        /* 重置按钮特殊颜色 */
+        .btn-danger {
+            border-color: #d68787;
+            color: #b34d4d;
+        }
+        .btn-danger:hover {
+            background: rgba(214, 135, 135, 0.2);
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(0,0,0,0.08);
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部显示 -->
+    <div class="score-board">
+        <span id="score-label">累计功德</span>: <span id="score">0</span>
+    </div>
+
+    <!-- 木鱼主体 -->
+    <div class="muyu-container" id="muyu-box">
+        <img id="muyu-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 60 C 10 20, 90 20, 90 60 C 90 90, 10 90, 10 60 Z' fill='%235D4037'/><path d='M20 55 Q 50 45 80 55' stroke='%233E2723' stroke-width='4' fill='none'/></svg>" alt="木鱼">
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel">
+        <div class="setting-group">
+            <label>顶部标题</label>
+            <input type="text" id="custom-label" value="累计功德" placeholder="例如：当前烦恼">
+        </div>
+
+        <div class="setting-group">
+            <label>敲击飘字</label>
+            <input type="text" id="custom-text" value="功德 +1" placeholder="例如：烦恼 -1">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+            <label>更换样式</label>
+            <div class="file-input-wrapper">
+                <div class="btn">📂 上传本地图片</div>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+            <button class="btn btn-danger" id="reset-btn">🔄 重置累计</button>
+        </div>
+    </div>
+
+    <script>
+        let count = 0;
+        const muyuBox = document.getElementById('muyu-box');
+        const muyuImg = document.getElementById('muyu-img');
+        const scoreDisplay = document.getElementById('score');
+        
+        const scoreLabelDisplay = document.getElementById('score-label');
+        const customLabelInput = document.getElementById('custom-label');
+        const customTextInput = document.getElementById('custom-text');
+        
+        const fileInput = document.getElementById('file-input');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // 1. 监听顶部标题文字修改
+        customLabelInput.addEventListener('input', (e) => {
+            // 如果用户清空了输入框，默认显示"累计"
+            scoreLabelDisplay.innerText = e.target.value || "累计";
+        });
+
+        // 2. 监听重置按钮点击
+        resetBtn.addEventListener('click', () => {
+            count = 0;
+            scoreDisplay.innerText = count;
+            
+            // 可选：给数字加个小动画提示已经重置
+            scoreDisplay.style.transform = "scale(1.5)";
+            scoreDisplay.style.color = "#b34d4d";
+            setTimeout(() => {
+                scoreDisplay.style.transform = "scale(1)";
+                scoreDisplay.style.color = ""; // 恢复原色
+            }, 300);
+        });
+
+        // 3. 处理本地图片上传
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    muyuImg.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 4. 处理敲击逻辑
+        muyuBox.addEventListener('click', (e) => {
+            // 更新计数
+            count++;
+            scoreDisplay.innerText = count;
+
+            // 创建飘字
+            const text = customTextInput.value || "功德 +1";
+            const floatingText = document.createElement('div');
+            floatingText.className = 'floating-text';
+            floatingText.innerText = text;
+
+            // 计算飘字位置
+            const rect = muyuBox.getBoundingClientRect();
+            // X轴在图片中心处
+            floatingText.style.left = (rect.left + rect.width / 2) + 'px';
+            // Y轴在图片顶部
+            floatingText.style.top = rect.top + 'px';
+            
+            // X轴加一点随机偏移量(-20px 到 20px)，防止连续点击文字完全重叠
+            const randomX = (Math.random() - 0.5) * 40;
+            floatingText.style.marginLeft = randomX + 'px';
+
+            document.body.appendChild(floatingText);
+
+            // 动画结束后移除 DOM 节点
+            setTimeout(() => {
+                floatingText.remove();
+            }, 800);
+        });
+    </script>
+</body>
+</html>

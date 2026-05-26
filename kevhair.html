@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测测你是王凯身上哪个部位的毛</title>
+    <style>
+        /* 动态莫兰迪色系渐变背景 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            /* 使用莫兰迪色系：暖灰、灰蓝、鼠尾草绿、灰粉 */
+            background: linear-gradient(-45deg, #d6d2c4, #b0bac3, #b3c0a4, #d4c4b7);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #4a4a4a;
+            overflow: hidden;
+        }
+
+        /* 背景动画帧 */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 极致的毛玻璃UI美学 */
+        .glass-container {
+            width: 90%;
+            max-width: 550px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            padding: 35px 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 22px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #5c6366;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        #progress {
+            font-size: 14px;
+            color: #7a8286;
+            text-align: center;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        .question-box {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            /* 隐藏滚动条但保留滚动功能 */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .question-box::-webkit-scrollbar {
+            display: none;
+        }
+
+        #question-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: justify;
+            color: #3b4245;
+        }
+
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-size: 15px;
+            color: #5c6366;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+            border-color: #ffffff;
+            color: #3b4245;
+        }
+
+        #result-box {
+            display: none;
+            text-align: center;
+            overflow-y: auto;
+            height: 100%;
+            scrollbar-width: none;
+        }
+        #result-box::-webkit-scrollbar { display: none; }
+
+        .result-type {
+            font-size: 36px;
+            font-weight: bold;
+            color: #3b4245;
+            margin: 15px 0;
+            text-shadow: 0 2px 10px rgba(255,255,255,0.5);
+        }
+
+        .result-code {
+            font-size: 16px;
+            color: #7a8286;
+            margin-bottom: 25px;
+            letter-spacing: 4px;
+            background: rgba(255,255,255,0.4);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .result-desc {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #4a5054;
+            text-align: left;
+            background: rgba(255,255,255,0.5);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.6);
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: rgba(142, 154, 157, 0.8);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            backdrop-filter: blur(5px);
+            margin-bottom: 20px;
+        }
+
+        .restart-btn:hover {
+            background: rgba(117, 129, 132, 0.9);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="glass-container">
+    <div id="quiz-box">
+        <h1>测测你是王凯身上哪个部位的毛</h1>
+        <div id="progress">1 / 20</div>
+        <div class="question-box">
+            <div id="question-text">题目加载中...</div>
+            <div id="options-container">
+                <!-- 选项由JS动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <div id="result-box">
+        <h1>你的测试结果出炉</h1>
+        <div class="result-type" id="res-type">加载中</div>
+        <div class="result-code" id="res-code">XXXX</div>
+        <div class="result-desc" id="res-desc">加载中</div>
+        <button class="restart-btn" onclick="location.reload()">再测一次</button>
+    </div>
+</div>
+
+<script>
+    // 四大维度：FH(门面/隐蔽), PG(高级/接地气), RT(叛逆/理论), SE(尖锐/同理)
+    // 题目数组：支持 2个 或 4个 选项混合
+    const questions = [
+        // F(门面) vs H(隐蔽)
+        { q: "为校园电影社团组织放映活动时，你最关注哪个环节？", options: [
+            { text: "必须亲自把控海报和物料，确保视觉效果新奇抢眼", val: "F" },
+            { text: "负责现场的社交氛围和开场白，保证大家情绪高涨", val: "F" },
+            { text: "默默在后台检查播放器和投影仪，保证放映过程不出错", val: "H" },
+            { text: "坐在最后排，观察观众的反应并默默记录", val: "H" }
+        ]},
+        { q: "在人际交往的圈子里，你觉得自己通常扮演什么角色？", options: [
+            { text: "站在台前发光发热、输出核心观点的绝对门面", val: "F" },
+            { text: "活跃气氛的组织者，喜欢把大家聚在一起", val: "F" },
+            { text: "在幕后默默提供底层逻辑分析的军师", val: "H" },
+            { text: "承载他人情绪价值、极其稳固的承重墙", val: "H" }
+        ]},
+        { q: "设计修远楼的Logo时，你希望你的作品传达出怎样的第一眼感觉？", options: [
+            { text: "热烈且有视觉冲击力，让人一眼惊艳", val: "F" },
+            { text: "克制且内敛的高级感，润物细无声", val: "H" } // 保留二选一
+        ]},
+        { q: "突然发现原本在卢湾的英国签证中心搬到了四川中路，打乱了你的行程，你会？", options: [
+            { text: "立刻发个朋友圈激情吐槽这离谱的行政变动", val: "F" },
+            { text: "在相关的群里大声抱怨两句以示不满", val: "F" },
+            { text: "心里暗骂一句，然后打开地图默默重新规划路线", val: "H" },
+            { text: "情绪毫无波澜，灰溜溜地坐地铁去人民广场", val: "H" }
+        ]},
+        { q: "朋友聚会拍大合照，如果没有人特意安排位置，你通常会？", options: [
+            { text: "自然而然地站到C位或最抢眼的位置", val: "F" },
+            { text: "站到边缘，或者干脆主动拿相机帮大家拍", val: "H" } // 保留二选一
+        ]},
+        
+        // P(高级) vs G(接地气)
+        { q: "如果你要为自己开发一个网页，你的UI美学执念是？", options: [
+            { text: "必须是莫兰迪色系配合毛玻璃效果，质感拉满", val: "P" },
+            { text: "追求极简的黑白灰，配上极其考究的排版间距", val: "P" },
+            { text: "只要文字排版清晰就行，颜色大红大绿也无所谓", val: "G" },
+            { text: "直接套用现成的基础模板，能看懂就行，绝不内耗", val: "G" }
+        ]},
+        { q: "刚结束240小时的信贷评估高强度实习，你会用什么方式狠狠犒劳自己？", options: [
+            { text: "去吃一顿需要提前预约的精致Bistro或法餐", val: "P" },
+            { text: "看一场极具深度的文艺片，进行灵魂放松", val: "P" },
+            { text: "约上三五好友去大排档喝一顿冰啤酒", val: "G" },
+            { text: "不需要花里胡哨，直奔滨寿司狠狠塞满碳水", val: "G" }
+        ]},
+        { q: "遇到一篇完全没有翻译、极其晦涩的长篇英文专业文献，你的状态是？", options: [
+            { text: "泡杯咖啡，优雅地划线啃完，享受学术的乐趣", val: "P" },
+            { text: "强撑着看10秒就开始发呆，简直要了命了", val: "G" } // 保留二选一
+        ]},
+        { q: "当你要给学弟分享一段深刻的随笔时，你会怎么做？", options: [
+            { text: "特意使用方正国美进道体打在Word上，仪式感很重", val: "P" },
+            { text: "导出成精美的PDF，并加上自己的专属水印/署名", val: "P" },
+            { text: "直接在微信聊天框里打一大段纯文本发过去", val: "G" },
+            { text: "发个几十秒的语音直接口头交流", val: "G" }
+        ]},
+        { q: "挑选日常记录工具（比如Markdown软件），你最核心的诉求是？", options: [
+            { text: "界面必须优雅（像Bear一样），导出的PDF排版必须好看", val: "P" },
+            { text: "功能足够强大，免费，好不好看无所谓", val: "G" } // 保留二选一
+        ]},
+
+        // R(叛逆) vs T(理论)
+        { q: "面对一份极其复杂的法文全成本核算报表，你的第一反应和处理方式是？", options: [
+            { text: "卧槽完蛋了——果断甩锅丢给AI处理", val: "R" },
+            { text: "随便糊弄一下，反正觉得这东西在实际业务中没用", val: "R" },
+            { text: "找以前的模板，按部就班地往里填数据", val: "T" },
+            { text: "不慌，先搞懂 Méthode 的底层原理，再自己推导模型", val: "T" }
+        ]},
+        { q: "当市面上的软件无法满足你的排版和转写需求时，你会？", options: [
+            { text: "直接自己动手造轮子，开发个属于自己的转写器", val: "R" },
+            { text: "果断抛弃这个软件，去外网找更小众的替代品", val: "R" },
+            { text: "花时间耐心研究现有软件的隐藏功能或代码注入", val: "T" },
+            { text: "向开发者写邮件反馈需求，等待官方更新", val: "T" }
+        ]},
+        { q: "回忆当年高考数学，遇到最后一两道极其刁钻的压轴题，你的内心戏？", options: [
+            { text: "这破题爱谁做谁做，老子先检查前面的保证不丢分", val: "R" },
+            { text: "不慌，先在草稿纸上画图，按部就班分析题目逻辑", val: "T" } // 保留二选一
+        ]},
+        { q: "突然需要涉猎一个不熟悉的新领域（比如新的代码框架），你的学习曲线是？", options: [
+            { text: "直接上手抄代码，边报错边改，跑通再说", val: "R" },
+            { text: "先看别人的实战视频，照猫画虎弄个半成品出来", val: "R" },
+            { text: "买本系统的书或看长篇教程，一章一章推进", val: "T" },
+            { text: "先死磕官方文档，全面了解底层逻辑再动手", val: "T" }
+        ]},
+        { q: "你对“秩序感”的要求有多高？比如你的电脑桌面或笔记分类？", options: [
+            { text: "表面乱七八糟没有文件夹，主打一个乱中有序，全靠搜索", val: "R" },
+            { text: "凭直觉乱放，实在塞不下了再建个“新建文件夹”扔进去", val: "R" },
+            { text: "按照项目/时间线大致分类，基本整洁", val: "T" },
+            { text: "井井有条，有着自己极其严苛和细致的层级标签系统", val: "T" }
+        ]},
+
+        // S(尖锐) vs E(同理)
+        { q: "在一场关于平权与社会平等的深度对话中，你通常是？", options: [
+            { text: "一针见血地抛出尖锐观点，直击事物痛点的人", val: "S" },
+            { text: "无情的数据罗列机器，用事实碾压对方", val: "S" },
+            { text: "站在中立视角，平衡双方情绪的调停者", val: "E" },
+            { text: "温和倾听，为弱势群体提供逻辑支撑和情绪价值的人", val: "E" }
+        ]},
+        { q: "当你的朋友在生活或感情中走入了明显的死胡同，你会怎么做？", options: [
+            { text: "毫不留情，用最难听但最真实的话把他骂醒", val: "S" },
+            { text: "顺着他的毛摸，委婉地引导他自己去发现问题", val: "E" } // 保留二选一
+        ]},
+        { q: "那个在苏州的挚友，半夜突然打电话叫你出去吃宵夜？", options: [
+            { text: "骂他神经病，果断挂电话并继续睡觉", val: "S" },
+            { text: "虽然很困而且嫌麻烦，但还是会心软答应他一起去", val: "E" } // 保留二选一
+        ]},
+        { q: "当别人对你辛辛苦苦搭配出的网页前端美学提出“看不懂”的质疑时？", options: [
+            { text: "表面微笑，内心暗骂“你懂什么叫高级，土鳖”", val: "S" },
+            { text: "直接怼回去，并甩出各种设计原理证明对方审美不行", val: "S" },
+            { text: "耐心向对方解释自己运用这些色彩和毛玻璃的初衷", val: "E" },
+            { text: "表面不显，但内心默默反思“是我设计的太奇怪了吗”", val: "E" }
+        ]},
+        { q: "综合来看，抛开所有的外在伪装，你觉得自己的性格底色更偏向？", options: [
+            { text: "极其冷酷、极度理性的数据分析机器", val: "S" },
+            { text: "充满感性同理心的艺术创作者", val: "E" } // 保留二选一
+        ]}
+    ];
+
+    // 16型人格映射表
+    const results = {
+        "FPRS": { name: "头发", desc: "【绝对门面担当】你就是团队里最显眼的活招牌。你极度在意新奇度与高级感（莫兰迪色是你的底线），同时有着遇事果断甩锅的科技叛逆感。当有人质疑你时，你的尖锐防御会立刻启动。你是最高调的叛逆者。" },
+        "FPRE": { name: "睫毛", desc: "【脆弱又迷人的审美洁癖者】追求极致的毛玻璃质感，不愿遵循死板的理论，但内心却是个充满感性同理心的艺术创作者。你美丽、敏感，不轻易妥协，但对身边亲近的人极其温柔。" },
+        "FPTS": { name: "眉毛", desc: "【定海神针般的逻辑利刃】你是五官的框架！追求高级审美的同时，遇到难题会“先分析题目”。在深度的讨论中，你永远是那个带着严密理论抛出尖锐观点、定下全场基调的人。" },
+        "FPTE": { name: "胡子", desc: "【充满仪式感的理论武装派】连写个随笔都要用方正国美体！你既要门面的高级，又要理论的厚重。但在尖锐的外表和严谨的逻辑下，挚友半夜叫你你依然会去，充满同理心。" },
+        "FGRS": { name: "中指上的毛", desc: "【反内耗的科技叛逆者】“卧槽完自己造轮子或者丢给AI”是你的人生信条。你不追求虚浮的高级感，主打一个实用且叛逆。遇到朋友犯傻，你会毫不留情一针见血骂醒。优雅且致命。" },
+        "FGRE": { name: "胸毛", desc: "【散发荷尔蒙的随性Player】接地气、反教条、爱热闹。没有Deadline的时候，你最喜欢约人出去放松。你是乱中有序的小太阳，是朋友们最爱靠近的随性门面。" },
+        "FGTS": { name: "手臂上的汗毛", desc: "【全天候的环境感知器】你不装逼，爱吃滨寿司，但遇到市面上烂软件时会直接动手搞理论开发。你感知敏锐，说话直接，是团队里最实用的外显雷达。" },
+        "FGTE": { name: "腹毛", desc: "【极简主义的享乐大师】高强度实习后一顿滨寿司就能让你升天。你理论扎实（先搞懂全成本核算），但在生活中极其随和，充满感性同理心。你离胃最近，最懂朴实无华的快乐。" },
+        "HPRS": { name: "阴毛", desc: "【混沌与感性的绝对核心】极其隐蔽，但拥有着绝对高级的审美底线。你排斥死板理论，说话一针见血，只对极少数踏入你安全区的人（比如挚友和学弟）展露最真实的自我。" },
+        "HPRE": { name: "腋毛", desc: "【渴望呼吸的自由灵魂】隐蔽在暗处，却有着极高的精神追求。你讨厌被理论束缚，热爱感性创作。表面上是个默默的承重墙，但只有在完全放松时，别人才能看到你狂野的内心。" },
+        "HPTS": { name: "脚大拇指上的毛", desc: "【隐秘角落的执念狂】虽然身处幕后默默承重，但对色彩和质感有着绝对不可触碰的执念。你做事逻辑严密，面对质疑会尖锐反击，一直在自己的小宇宙里默默发力。" },
+        "HPTE": { name: "鬓角毛", desc: "【沉默的隐形守护者】你注重质感，遇事喜欢先看理论。作为承重墙，你有着极强的同理心，面对质疑甚至会反思“是我设计奇怪吗”，默默在边缘守护着全局的美感。" },
+        "HGRS": { name: "肛毛", desc: "【直击痛点的人间清醒】这个位置虽然隐蔽，但处理的都是最烂的摊子。你对试图用感性掩盖逻辑漏洞的行为嗤之以鼻，是朋友陷入泥潭时最需要的那个一针见血救命的人。" },
+        "HGRE": { name: "耳毛", desc: "【顺风耳般的八卦收集器】你不追求抛头露面，也不需要高级感。你喜欢用非传统方式解决问题，同时极具同理心，总是默默倾听朋友的烦恼并给出温和建议。" },
+        "HGTS": { name: "鼻毛", desc: "【反装逼的垃圾过滤器】晦涩的英文长篇文献？在你地盘活不过10秒。你隐藏在深处，脚踏实地讲求理论，说话直接尖锐，存在就是为了过滤掉世俗的粉尘和毫无意义的内耗。" },
+        "HGTE": { name: "腿毛", desc: "【灰溜溜但靠谱的执行者】签证中心搬了？心里暗骂一句然后默默去坐地铁。你是不起眼的承重墙，靠谱、接地气、讲规矩，带着满满的同理心承载着生活的重压。" }
+    };
+
+    let currentQ = 0;
+    let scores = { F: 0, H: 0, P: 0, G: 0, R: 0, T: 0, S: 0, E: 0 };
+
+    function loadQuestion() {
+        if (currentQ >= questions.length) {
+            showResult();
+            return;
+        }
+        document.getElementById('progress').innerText = `${currentQ + 1} / 20`;
+        const qData = questions[currentQ];
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const optsBox = document.getElementById('options-container');
+        optsBox.innerHTML = '';
+        
+        // 动态生成选项按钮（兼容2个或4个选项）
+        qData.options.forEach((opt) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => {
+                scores[opt.val]++;
+                currentQ++;
+                loadQuestion();
+            };
+            optsBox.appendChild(btn);
+        });
+    }
+
+    function showResult() {
+        document.getElementById('quiz-box').style.display = 'none';
+        document.getElementById('result-box').style.display = 'block';
+
+        const dim1 = scores.F >= scores.H ? 'F' : 'H';
+        const dim2 = scores.P >= scores.G ? 'P' : 'G';
+        const dim3 = scores.R >= scores.T ? 'R' : 'T';
+        const dim4 = scores.S >= scores.E ? 'S' : 'E';
+        const finalCode = dim1 + dim2 + dim3 + dim4;
+
+        const resultData = results[finalCode];
+
+        document.getElementById('res-code').innerText = `你的维度代码：${finalCode}`;
+        document.getElementById('res-type').innerText = resultData.name;
+        document.getElementById('res-desc').innerText = resultData.desc;
+    }
+
+    // 启动第一题
+    loadQuestion();
+</script>
+
+</body>
+</html>

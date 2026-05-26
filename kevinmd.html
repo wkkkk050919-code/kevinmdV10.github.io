@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kevin Markdown - V12.7</title>
+
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
+    <style>
+        :root {
+            --panel-opacity: 0.85;
+            --panel-blur: 12px;
+        }
+
+        body {
+            display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
+            background-color: #e9ecef;
+            background-image: url('IMG_6003.jpg');
+            background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
+            font-family: STSong, "Songti SC", SimSun, serif; color: #222;
+            transition: background-image 0.5s ease;
+        }
+
+        .toolbar, .panel {
+            background-color: rgba(255, 255, 255, var(--panel-opacity));
+            backdrop-filter: blur(var(--panel-blur)); -webkit-backdrop-filter: blur(var(--panel-blur));
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .toolbar {
+            margin-bottom: 15px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 18px;
+        }
+
+        .site-title { display: flex; align-items: center; margin-right: auto; }
+        .site-title h1 {
+            font-size: 20px; font-weight: 800; margin: 0; padding: 0; letter-spacing: -0.5px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #ffffff; text-shadow: 0px 2px 10px rgba(0,0,0,0.8); transition: all 0.3s;
+        }
+
+        .toolbar select, .toolbar button, .rich-tools select, .rich-tools button {
+            padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); outline: none;
+            background: rgba(255,255,255,0.8); cursor: pointer; font-size: 13px; font-weight: 500;
+            color: #444; transition: all 0.2s; font-family: -apple-system, sans-serif;
+        }
+
+        .toolbar select:hover, .toolbar button:hover, .rich-tools select:hover, .rich-tools button:hover {
+            background: #fff; border-color: rgba(0,0,0,0.2); box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .slider-group { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); }
+        .slider-group span { font-size: 14px; cursor: default; }
+        input[type="range"] { cursor: pointer; width: 65px; height: 4px; accent-color: #4e4376; }
+
+        .toolbar button.btn-primary { background: #007aff; color: white; border: none; box-shadow: 0 2px 8px rgba(0,122,255,0.25); }
+        .toolbar button.btn-primary:hover { background: #0062cc; transform: translateY(-1px); }
+        .toolbar button.btn-danger { background: #ff3b30; color: white; border: none; box-shadow: 0 2px 8px rgba(255,59,48,0.25); }
+        .toolbar button.btn-danger:hover { background: #cc2e26; transform: translateY(-1px); }
+        .toolbar button.btn-auth { background: #34c759; color: white; border: none; box-shadow: 0 2px 8px rgba(52,199,89,0.25); }
+        .toolbar button.btn-auth:hover { background: #28a745; transform: translateY(-1px); }
+        .toolbar button.btn-logout { background: #ff9500; color: white; border: none; box-shadow: 0 2px 8px rgba(255,149,0,0.25); }
+        .toolbar button.btn-logout:hover { background: #e68600; transform: translateY(-1px); }
+        .toolbar button.btn-history { background: #af52de; color: white; border: none; box-shadow: 0 2px 8px rgba(175,82,222,0.25); }
+        .toolbar button.btn-history:hover { background: #8944b8; transform: translateY(-1px); }
+
+        .user-greeting { font-size: 12px; color: #007aff; font-weight: 600; margin-left: 4px; font-family: -apple-system, sans-serif; }
+
+        .container { display: flex; flex: 1; gap: 20px; overflow: hidden; }
+        .panel { flex: 1; display: flex; flex-direction: column; }
+
+        .panel-header {
+            background: rgba(250, 250, 250, 0.4); padding: 10px 16px; font-weight: 600; border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-radius: 12px 12px 0 0; color: #555; display: flex; justify-content: space-between; align-items: center;
+            font-family: -apple-system, sans-serif; font-size: 13px;
+        }
+
+        .editor textarea {
+            flex: 1; width: 100%; padding: 24px; border: none; resize: none; outline: none; font-family: "SF Mono", "Menlo", monospace; font-size: 13px; box-sizing: border-box; line-height: 1.6; background: transparent; color: #333;
+        }
+
+        .rich-tools { display: flex; gap: 6px; align-items: center; font-weight: normal; flex-wrap: wrap; }
+        .rich-tools select { padding: 4px 8px; }
+        .tool-separator { width: 1px; height: 16px; background: rgba(0,0,0,0.12); margin: 0 2px; }
+
+        .preview-content { flex: 1; padding: 40px; overflow-y: auto; color: #222; outline: none; background: transparent; font-size: 14px; line-height: 1.6; scroll-behavior: smooth;}
+        .preview-content h1 { font-size: 1.8em; margin-top: 1em; margin-bottom: 0.5em; font-weight: bold;}
+        .preview-content h2 { font-size: 1.4em; margin-top: 1em; margin-bottom: 0.5em; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 5px; font-weight: bold;}
+        .preview-content p, .preview-content li { word-wrap: break-word; white-space: pre-wrap; margin-bottom: 0.8em; }
+
+        .preview-content img {
+            max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            cursor: pointer; border: 2px solid transparent; transition: border 0.2s, margin 0.1s;
+            display: block; margin: 12px auto; page-break-inside: avoid; break-inside: avoid;
+        }
+        .preview-content img.selected-img { border-color: #007aff; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
+
+        .preview-content pre { padding: 14px; border-radius: 8px; overflow-x: auto; background-color: #f8f9fa; border: 1px solid rgba(0,0,0,0.05); color: #383a42; white-space: pre-wrap; word-wrap: break-word; margin: 1em 0; font-size: 0.9em; }
+        .preview-content code { font-family: "SF Mono", Menlo, monospace; background: rgba(0,0,0,0.04); padding: 2px 5px; border-radius: 4px; font-size: 0.9em; color: #e06c75; }
+        .preview-content pre code { background: none; padding: 0; color: inherit; }
+
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 0.9em; border-radius: 6px; overflow: hidden; }
+        th, td { border: 1px solid rgba(0,0,0,0.08); padding: 10px 12px; text-align: left; }
+        th { background-color: rgba(0, 0, 0, 0.02); font-weight: 600; }
+
+        .preview-content p, .preview-content li, .preview-content pre, .preview-content table, .preview-content tr, .preview-content h1, .preview-content h2, .preview-content h3 {
+            page-break-inside: avoid; break-inside: avoid;
+        }
+
+        .font-sans { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+        .font-serif { font-family: STSong, "Songti SC", SimSun, serif; }
+        .font-kaiti { font-family: STKaiti, "Kaiti SC", KaiTi, serif; }
+        .font-mono { font-family: "SF Mono", Menlo, Courier, monospace; }
+        .font-times { font-family: "Times New Roman", Times, serif; }
+        .font-garamond { font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text", "Times New Roman", serif; }
+        .font-georgia { font-family: Georgia, serif; }
+        .font-helvetica { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+        .preview-content.theme-modern { line-height: 1.75; color: #334155; }
+        .preview-content.theme-modern h1, .preview-content.theme-modern h2, .preview-content.theme-modern h3 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; border-bottom: none; }
+        .preview-content.theme-modern h1 { font-size: 2.2em; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+        .preview-content.theme-modern h2 { font-size: 1.5em; font-weight: 700; color: #5B6C7D; margin-top: 1.5em; }
+        .preview-content.theme-modern blockquote { border-left: 4px solid #9B6A6C; background: rgba(155, 106, 108, 0.06); padding: 12px 16px; margin: 1em 0; border-radius: 4px; color: #555; }
+        .preview-content.theme-modern table th { background-color: #f8fafc; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+
+        .preview-content.theme-scholar { line-height: 1.5; color: #000; text-align: justify; }
+        .preview-content.theme-scholar h1, .preview-content.theme-scholar h2, .preview-content.theme-scholar h3 { font-family: "Times New Roman", Times, serif; color: #000; }
+        .preview-content.theme-scholar h1 { font-size: 2em; text-align: center; font-weight: bold; margin-bottom: 1em; border-bottom: none; }
+        .preview-content.theme-scholar h2 { font-size: 1.4em; border-bottom: 1px solid #000; padding-bottom: 3px; margin-top: 1.5em; }
+        .preview-content.theme-scholar blockquote { border-left: none; border-left: 3px solid #000; padding-left: 15px; color: #333; font-style: italic; }
+        .preview-content.theme-scholar table { border-top: 2px solid #000; border-bottom: 2px solid #000; border-left: none; border-right: none; border-radius: 0; }
+        .preview-content.theme-scholar table th, .preview-content.theme-scholar table td { border: none; border-bottom: 1px solid #ddd; padding: 8px 10px; }
+        .preview-content.theme-scholar table th { border-bottom: 1px solid #000; background: none; }
+
+        .preview-content.theme-executive { line-height: 1.6; color: #1a202c; }
+        .preview-content.theme-executive h1 { font-family: Georgia, serif; font-size: 2.2em; font-weight: normal; color: #1A365D; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .preview-content.theme-executive h2 { font-family: Georgia, serif; font-size: 1.3em; color: #2b6cb0; text-transform: uppercase; letter-spacing: 1px; border-bottom: none; margin-top: 1.5em; }
+        .preview-content.theme-executive blockquote { border-left: 4px solid #cbd5e0; background: transparent; padding-left: 15px; color: #4a5568; font-family: Georgia, serif; }
+        .preview-content.theme-executive table th { background-color: #1A365D; color: #fff; border: 1px solid #1A365D; border-radius: 0;}
+        .preview-content.theme-executive table td { border: 1px solid #e2e8f0; }
+
+        .warning-text { font-size: 12px; color: #ff3b30; font-weight: normal; margin-left: 10px; display: none; }
+        .lock-status { font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .lock-false { background: rgba(0,122,255,0.1); color: #007aff; }
+        .lock-true { background: rgba(255,59,48,0.1); color: #ff3b30; }
+
+        .img-control-panel {
+            display: none; position: absolute; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1); padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 8px; align-items: center; z-index: 1001; font-family: -apple-system, sans-serif; font-size: 12px;
+        }
+        .img-control-panel input[type="range"] { width: 80px; }
+        .img-control-panel button { padding: 4px 8px; font-size: 11px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+        .img-control-panel button:hover { background: #f0f0f0; border-color: #999; }
+
+        .img-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6); padding: 20px; border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 1000; width: 320px;
+            font-family: -apple-system, sans-serif;
+        }
+        .img-modal h4 { margin: 0 0 12px 0; color: #333; font-size: 15px; }
+        .img-modal input[type="text"] { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.15); box-sizing: border-box; margin-bottom: 12px; outline: none; font-size: 13px; }
+        .img-modal-btns { display: flex; justify-content: flex-end; gap: 8px; }
+        .img-modal-overlay { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.2); z-index:999; }
+
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding-bottom: 5px; }
+        .katex-display::-webkit-scrollbar { height: 6px; }
+        .katex-display::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+
+        /* ===== Auth Modal ===== */
+        .auth-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .auth-overlay.active { display: flex; }
+
+        .auth-modal {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px; padding: 32px 28px; width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
+        .auth-modal h3 { margin: 0 0 20px 0; text-align: center; font-size: 20px; color: #1a1a2e; }
+        .auth-modal .form-group { margin-bottom: 14px; }
+        .auth-modal .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: 500; }
+        .auth-modal .form-group input {
+            width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px;
+            font-size: 14px; outline: none; box-sizing: border-box; transition: border 0.2s;
+        }
+        .auth-modal .form-group input:focus { border-color: #007aff; }
+        .auth-modal .auth-error { color: #ff3b30; font-size: 12px; margin-bottom: 10px; min-height: 18px; }
+        .auth-modal .auth-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+            cursor: pointer; color: white; background: #007aff; transition: all 0.2s; margin-top: 4px;
+        }
+        .auth-modal .auth-btn:hover { background: #0062cc; transform: translateY(-1px); }
+        .auth-modal .auth-switch {
+            text-align: center; margin-top: 14px; font-size: 13px; color: #888;
+        }
+        .auth-modal .auth-switch a { color: #007aff; cursor: pointer; text-decoration: none; font-weight: 500; }
+        .auth-modal .auth-switch a:hover { text-decoration: underline; }
+
+        /* ===== History Panel ===== */
+        .history-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.3); z-index: 2000; justify-content: flex-end;
+        }
+        .history-overlay.active { display: flex; }
+
+        .history-panel {
+            width: 420px; height: 100vh; background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            box-shadow: -4px 0 30px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
+        .history-panel .history-header {
+            padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.08);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-panel .history-header h3 { margin: 0; font-size: 18px; color: #1a1a2e; }
+        .history-panel .history-header button {
+            background: none; border: none; font-size: 22px; cursor: pointer; color: #999; padding: 4px;
+        }
+        .history-panel .history-header button:hover { color: #333; }
+        .history-panel .history-list {
+            flex: 1; overflow-y: auto; padding: 12px 16px;
+        }
+        .history-item {
+            padding: 14px 16px; border-radius: 10px; background: rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.05); margin-bottom: 10px; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .history-item:hover { background: rgba(0,122,255,0.04); border-color: rgba(0,122,255,0.15); }
+        .history-item .hi-date { font-size: 11px; color: #999; margin-bottom: 4px; }
+        .history-item .hi-preview { font-size: 13px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-item .hi-type { font-size: 10px; color: #007aff; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .history-item .hi-delete {
+            position: absolute; top: 10px; right: 12px; background: none; border: none;
+            color: #ccc; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
+        }
+        .history-item .hi-delete:hover { color: #ff3b30; background: rgba(255,59,48,0.08); }
+        .history-empty { text-align: center; color: #bbb; padding: 40px 20px; font-size: 14px; }
+        .history-footer {
+            padding: 12px 24px; border-top: 1px solid rgba(0,0,0,0.06);
+            font-size: 12px; color: #aaa; text-align: center;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="toolbar">
+        <div class="site-title"><h1 id="main-title">Kevin MD</h1></div>
+
+        <input type="file" id="bg-upload" accept="image/*" style="display:none;" onchange="changeBackground(event)">
+        <button onclick="document.getElementById('bg-upload').click()" title="更换背景图片">🖼️</button>
+
+        <div class="slider-group" title="调节面板透明度">
+            <span>💧</span>
+            <input type="range" id="opacity-slider" min="0.2" max="1" step="0.05" value="0.85">
+        </div>
+
+        <div class="slider-group" title="调节背景模糊度">
+            <span>🌫️</span>
+            <input type="range" id="blur-slider" min="0" max="30" step="1" value="12">
+        </div>
+
+        <select id="theme-select" title="全局排版风格">
+            <option value="theme-default">✨ 默认风格</option>
+            <option value="theme-modern">✨ Modern 现代</option>
+            <option value="theme-scholar">✨ Scholar 学术</option>
+            <option value="theme-executive">✨ Executive 商务</option>
+        </select>
+
+        <select id="global-font-select" title="全局排版字体">
+            <optgroup label="中文字体">
+                <option value="font-sans">Aa 标准黑体 (默认)</option>
+                <option value="font-serif">Aa 经典宋体</option>
+                <option value="font-kaiti">Aa 优雅楷体</option>
+            </optgroup>
+            <optgroup label="英文字体 (学术/正式)">
+                <option value="font-times">Aa Times New Roman (经典学术)</option>
+                <option value="font-garamond">Aa Garamond (法式复古)</option>
+                <option value="font-georgia">Aa Georgia (优雅宽体)</option>
+                <option value="font-helvetica">Aa Helvetica (现代无衬线)</option>
+                <option value="font-mono">Aa 技术等宽</option>
+            </optgroup>
+        </select>
+
+        <select id="margin-select" title="PDF 导出页边距">
+            <option value="15">📏 边距: 15mm</option>
+            <option value="20">📏 边距: 20mm</option>
+            <option value="8">📏 边距: 8mm</option>
+        </select>
+
+        <select id="pdf-bg-select" title="PDF 导出护眼底色">
+            <option value="#FFFFFF">📄 纯白底色</option>
+            <option value="#F4F1EA">📄 燕麦护眼</option>
+            <option value="#E8EFEA">📄 浅鼠尾草</option>
+            <option value="#EBF0F5">📄 雾霾灰蓝</option>
+            <option value="#FAF0E6">📄 浅粉豆沙</option>
+        </select>
+
+        <button onclick="exportMD()" class="btn-primary" title="下载 .md 源文件">⬇️ MD</button>
+        <button onclick="exportPDF()" class="btn-danger" title="导出防裁切、带双语水印的 PDF">📥 PDF</button>
+
+        <!-- Auth buttons -->
+        <span id="user-greeting" class="user-greeting" style="display:none;"></span>
+        <button id="btn-login" onclick="openAuthModal('login')" class="btn-auth">🔑 登录 / 注册</button>
+        <button id="btn-history" onclick="openHistoryPanel()" class="btn-history" style="display:none;">📋 历史记录</button>
+        <button id="btn-logout" onclick="logout()" class="btn-logout" style="display:none;">🚪 退出</button>
+
+        <span class="warning-text" id="edit-warning">⚠️ 源文件修改，批注已刷新。</span>
+    </div>
+
+    <div class="container">
+        <div class="panel editor">
+            <div class="panel-header">📝 编辑区</div>
+            <textarea id="md-input" placeholder="# Document Title
+Location: Xiuyuan Building, RUC Suzhou
+
+Type your Markdown code here..."></textarea>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header" style="flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <span>👁️ 预览与精修区</span>
+                    <button onclick="toggleLock()" id="lock-btn" style="padding:2px 8px; font-size:11px; margin-left:8px;">🔒 锁定同步(开始自由精修)</button>
+                    <span id="lock-indicator" class="lock-status lock-false">同步中</span>
+                </div>
+
+                <div class="rich-tools">
+                    <button onclick="formatText('undo')" title="撤销">↩️</button>
+                    <button onclick="formatText('redo')" title="重做">↪️</button>
+                    <div class="tool-separator"></div>
+
+                    <button onclick="formatText('justifyLeft')" title="左对齐">FormatAlignLeft</button>
+                    <button onclick="formatText('justifyCenter')" title="居中对齐">FormatAlignCenter</button>
+                    <button onclick="formatText('justifyRight')" title="右对齐">FormatAlignRight</button>
+                    <div class="tool-separator"></div>
+
+                    <input type="file" id="img-local-insert" accept="image/*" style="display:none;" onchange="insertLocalImage(event)">
+                    <button onclick="document.getElementById('img-local-insert').click()" title="插入本地图片">🖼️ 本地</button>
+                    <button onclick="openImgUrlModal()" title="插入网络图片">🔗 网络</button>
+                    <div class="tool-separator"></div>
+
+                    <select title="局部字体" onchange="formatText('fontName', this.value); this.selectedIndex=0;">
+                        <option value="">Aa 字体...</option>
+                        <optgroup label="中文">
+                            <option value="STSong, SimSun, serif">宋体</option>
+                            <option value="STKaiti, KaiTi, serif">楷体</option>
+                            <option value="-apple-system, sans-serif">黑体</option>
+                        </optgroup>
+                        <optgroup label="英文 (正式 & 学术)">
+                            <option value="Times New Roman, serif">Times New Roman</option>
+                            <option value="Garamond, serif">Garamond</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="Helvetica, Arial, sans-serif">Helvetica / Arial</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                            <option value="Courier New, monospace">Courier (代码)</option>
+                        </optgroup>
+                        <optgroup label="趣味字体">
+                            <option value="Comic Sans MS">Comic Sans</option>
+                            <option value="Impact, sans-serif">Impact</option>
+                        </optgroup>
+                    </select>
+
+                    <select title="局部字号" onchange="formatText('fontSize', this.value); this.selectedIndex=0;">
+                        <option value="">T 字号...</option>
+                        <option value="1">极小 (8pt)</option>
+                        <option value="2">偏小 (10pt)</option>
+                        <option value="3">正常 (12pt)</option>
+                        <option value="4">中等 (14pt)</option>
+                        <option value="5">偏大 (18pt)</option>
+                        <option value="6">特大 (24pt)</option>
+                        <option value="7">巨大 (36pt)</option>
+                    </select>
+
+                    <select title="局部字色" onchange="formatText('foreColor', this.value); this.selectedIndex=0;">
+                        <option value="">🎨 颜色...</option>
+                        <optgroup label="学术与财务">
+                            <option value="#000000">纯黑 (Black)</option>
+                            <option value="#1A365D">深藏青 (Navy)</option>
+                            <option value="#7F1D1D">勃艮第红 (Burgundy)</option>
+                            <option value="#065F46">深林绿 (Forest)</option>
+                            <option value="#4B5563">高级灰 (Slate)</option>
+                        </optgroup>
+                        <optgroup label="高级莫兰迪">
+                            <option value="#5B6C7D">雾霾蓝</option>
+                            <option value="#9B6A6C">豆沙红</option>
+                            <option value="#737A59">橄榄绿</option>
+                            <option value="#C68A6B">陶土橘</option>
+                        </optgroup>
+                        <optgroup label="明亮警示色">
+                            <option value="#FF3B30">正红</option>
+                            <option value="#007AFF">明蓝</option>
+                        </optgroup>
+                    </select>
+
+                    <select title="局部高亮" onchange="formatText('backColor', this.value); this.selectedIndex=0;">
+                        <option value="">🖍️ 批注...</option>
+                        <optgroup label="明亮马克笔">
+                            <option value="#FFFF00">亮明黄</option>
+                            <option value="#00FF00">荧光绿</option>
+                            <option value="#00FFFF">青色</option>
+                            <option value="#FF00FF">品红</option>
+                        </optgroup>
+                        <optgroup label="温和护眼底色">
+                            <option value="#E6E2D6">燕麦米</option>
+                            <option value="#D9E0E5">云水蓝</option>
+                            <option value="#E8D7D8">枯玫瑰</option>
+                            <option value="#D8DFD6">鼠尾草</option>
+                            <option value="#FFF9C4">奶油黄</option>
+                        </optgroup>
+                    </select>
+
+                    <select title="修改标题层级" onchange="formatText('formatBlock', this.value); this.selectedIndex=0;">
+                        <option value="">标题层级...</option>
+                        <option value="<h1>">H1 一级标题</option>
+                        <option value="<h2>">H2 二级标题</option>
+                        <option value="<h3>">H3 三级标题</option>
+                        <option value="<h4>">H4 四级标题</option>
+                        <option value="<h5>">H5 五级标题</option>
+                        <option value="<h6>">H6 六级标题</option>
+                        <option value="<p>">P 普通正文</option>
+                    </select>
+
+                    <button onclick="formatText('indent')" title="把选定段落变为上一个段落的子层级">➡️ 缩进子层级</button>
+                    <button onclick="formatText('outdent')" title="提升选定段落的主层级位置">⬅️ 提升主层级</button>
+
+                    <button onclick="formatText('bold')" title="加粗"><b>B</b></button>
+                    <button onclick="formatText('italic')" title="斜体"><i>I</i></button>
+                    <button onclick="formatText('underline')" title="下划线"><u>U</u></button>
+                    <button onclick="formatText('removeFormat')" title="清除选中格式">🚫</button>
+                </div>
+            </div>
+            <div class="preview-content font-sans" id="preview-box" contenteditable="true" spellcheck="false"></div>
+        </div>
+    </div>
+
+    <!-- Image control panel -->
+    <div class="img-control-panel" id="img-ctrl">
+        <span>大小: <span id="img-width-val">80</span>%</span>
+        <input type="range" id="img-width-slider" min="10" max="100" value="80">
+        <div style="width:1px; height:14px; background:rgba(0,0,0,0.15); margin:0 4px;"></div>
+        <button onclick="setImgAlign('left')">左对齐</button>
+        <button onclick="setImgAlign('center')">居中</button>
+        <button onclick="setImgAlign('right')">右对齐</button>
+        <div style="width:1px; height:14px; background:rgba(0,0,0,0.15); margin:0 4px;"></div>
+        <button onclick="deleteSelectedImg()" style="color:#ff3b30; border-color: rgba(255,59,48,0.2);">删除</button>
+    </div>
+
+    <!-- Image URL modal -->
+    <div class="img-modal-overlay" id="modal-overlay" onclick="closeImgUrlModal()"></div>
+    <div class="img-modal" id="img-modal">
+        <h4>插入网络图片链接</h4>
+        <input type="text" id="img-url-input" placeholder="https://example.com/image.jpg">
+        <div class="img-modal-btns">
+            <button onclick="closeImgUrlModal()" style="background:none; border:none; color:#666;">取消</button>
+            <button onclick="insertNetworkImage()" class="btn-primary" style="padding:4px 12px;">确定</button>
+        </div>
+    </div>
+
+    <!-- Auth modal -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-modal" id="auth-modal">
+            <h3 id="auth-title">登录</h3>
+            <div class="auth-error" id="auth-error"></div>
+            <div class="form-group" id="email-group">
+                <label>邮箱</label>
+                <input type="email" id="auth-email" placeholder="请输入邮箱">
+            </div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="auth-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="auth-password" placeholder="请输入密码 (至少6位)">
+            </div>
+            <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">登录</button>
+            <div class="auth-switch" id="auth-switch">
+                <span>还没有账号？</span><a onclick="switchAuthMode('register')">立即注册</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- History panel -->
+    <div class="history-overlay" id="history-overlay" onclick="if(event.target===this)closeHistoryPanel()">
+        <div class="history-panel">
+            <div class="history-header">
+                <h3>📋 历史记录</h3>
+                <button onclick="closeHistoryPanel()">✕</button>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="history-empty">加载中...</div>
+            </div>
+            <div class="history-footer">自动保存已启用 · 仅保存已登录用户数据</div>
+        </div>
+    </div>
+
+    <script src="https://fastly.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // ==================== API 配置 ====================
+        const API_BASE = window.location.origin + '/api';
+
+        // ==================== 状态管理 ====================
+        let isLocked = false;
+        let activeImage = null;
+        let isUserEditingHtml = false;
+        let currentUser = null;
+        let authToken = null;
+        let authMode = 'login';
+
+        function initAuth() {
+            const saved = localStorage.getItem('kevinmd_auth');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    authToken = parsed.token;
+                    currentUser = parsed.user;
+                    updateAuthUI();
+                    loadHistory();
+                } catch (e) {
+                    localStorage.removeItem('kevinmd_auth');
+                }
+            }
+        }
+
+        function updateAuthUI() {
+            const btnLogin = document.getElementById('btn-login');
+            const btnLogout = document.getElementById('btn-logout');
+            const btnHistory = document.getElementById('btn-history');
+            const greeting = document.getElementById('user-greeting');
+
+            if (currentUser && authToken) {
+                btnLogin.style.display = 'none';
+                btnLogout.style.display = 'inline-block';
+                btnHistory.style.display = 'inline-block';
+                greeting.style.display = 'inline';
+                greeting.textContent = '👤 ' + currentUser.username;
+            } else {
+                btnLogin.style.display = 'inline-block';
+                btnLogout.style.display = 'none';
+                btnHistory.style.display = 'none';
+                greeting.style.display = 'none';
+            }
+        }
+
+        // ==================== Auth Modal ====================
+        function openAuthModal(mode) {
+            authMode = mode;
+            const overlay = document.getElementById('auth-overlay');
+            const title = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchEl = document.getElementById('auth-switch');
+            const emailGroup = document.getElementById('email-group');
+            const errorEl = document.getElementById('auth-error');
+
+            errorEl.textContent = '';
+            document.getElementById('auth-username').value = '';
+            document.getElementById('auth-password').value = '';
+            document.getElementById('auth-email').value = '';
+
+            if (mode === 'login') {
+                title.textContent = '登录';
+                submitBtn.textContent = '登录';
+                emailGroup.style.display = 'none';
+                switchEl.innerHTML = '<span>还没有账号？</span><a onclick="switchAuthMode(\'register\')">立即注册</a>';
+            } else {
+                title.textContent = '注册';
+                submitBtn.textContent = '注册';
+                emailGroup.style.display = 'block';
+                switchEl.innerHTML = '<span>已有账号？</span><a onclick="switchAuthMode(\'login\')">立即登录</a>';
+            }
+
+            overlay.classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-overlay').classList.remove('active');
+        }
+
+        function switchAuthMode(mode) {
+            openAuthModal(mode);
+        }
+
+        async function handleAuth() {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = '';
+
+            const username = document.getElementById('auth-username').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const email = document.getElementById('auth-email').value.trim();
+
+            if (!username || !password) {
+                errorEl.textContent = '请填写用户名和密码';
+                return;
+            }
+            if (authMode === 'register' && !email) {
+                errorEl.textContent = '请填写邮箱';
+                return;
+            }
+            if (password.length < 6) {
+                errorEl.textContent = '密码长度至少为6位';
+                return;
+            }
+
+            const endpoint = authMode === 'login' ? '/login' : '/register';
+            const body = authMode === 'login'
+                ? { username, password }
+                : { username, email, password };
+
+            try {
+                const resp = await fetch(API_BASE + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    errorEl.textContent = data.error || '操作失败';
+                    return;
+                }
+
+                authToken = data.token;
+                currentUser = data.user;
+                localStorage.setItem('kevinmd_auth', JSON.stringify({ token: authToken, user: currentUser }));
+                updateAuthUI();
+                closeAuthModal();
+                saveRecord('save');
+                loadHistory();
+            } catch (e) {
+                errorEl.textContent = '网络错误，请检查服务器是否运行';
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('kevinmd_auth');
+            updateAuthUI();
+            document.getElementById('history-list').innerHTML = '<div class="history-empty">请先登录以查看历史记录</div>';
+        }
+
+        // ==================== 历史记录 ====================
+        async function saveRecord(operationType) {
+            if (!authToken || !currentUser) return;
+
+            const content = mdInput.value;
+            if (!content.trim()) return;
+
+            try {
+                await fetch(API_BASE + '/records', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({ content, operation_type: operationType || 'save' })
+                });
+            } catch (e) {
+                // 静默失败, 不打扰用户编辑
+            }
+        }
+
+        let saveDebounceTimer = null;
+        function debouncedSave() {
+            if (!authToken || !currentUser) return;
+            if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(() => saveRecord('auto_save'), 3000);
+        }
+
+        async function loadHistory() {
+            if (!authToken || !currentUser) return;
+
+            try {
+                const resp = await fetch(API_BASE + '/records?limit=50', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await resp.json();
+
+                const listEl = document.getElementById('history-list');
+                if (!data.records || data.records.length === 0) {
+                    listEl.innerHTML = '<div class="history-empty">暂无历史记录</div>';
+                    return;
+                }
+
+                listEl.innerHTML = data.records.map(r => {
+                    const date = new Date(r.created_at).toLocaleString('zh-CN');
+                    const preview = r.content.replace(/\n/g, ' ').substring(0, 80);
+                    return `
+                        <div class="history-item" onclick="loadRecord(${r.id}, '${escapeHtml(r.content.replace(/'/g, "\\'").replace(/\n/g, '\\n'))}')">
+                            <button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})" title="删除">✕</button>
+                            <div class="hi-date">${date}</div>
+                            <div class="hi-preview">${escapeHtml(preview)}${r.content.length > 80 ? '...' : ''}</div>
+                            <div class="hi-type">${r.operation_type}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                document.getElementById('history-list').innerHTML = '<div class="history-empty">加载失败: ' + escapeHtml(e.message) + '</div>';
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function loadRecord(id, content) {
+            mdInput.value = content;
+            renderContent();
+            closeHistoryPanel();
+        }
+
+        async function deleteRecord(id) {
+            if (!authToken) return;
+            try {
+                await fetch(API_BASE + '/records/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                loadHistory();
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+
+        function openHistoryPanel() {
+            document.getElementById('history-overlay').classList.add('active');
+            loadHistory();
+        }
+
+        function closeHistoryPanel() {
+            document.getElementById('history-overlay').classList.remove('active');
+        }
+
+        // ==================== Markdown 编辑器核心 ====================
+        function changeBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { document.body.style.backgroundImage = `url('${e.target.result}')`; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        const root = document.documentElement;
+        document.getElementById('opacity-slider').addEventListener('input', (e) => { root.style.setProperty('--panel-opacity', e.target.value); });
+        document.getElementById('blur-slider').addEventListener('input', (e) => { root.style.setProperty('--panel-blur', e.target.value + 'px'); });
+
+        marked.setOptions({
+            highlight: function (code, lang) {
+                if (typeof hljs !== 'undefined') {
+                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    return hljs.highlight(code, { language }).value;
+                }
+                return code;
+            }
+        });
+
+        const mdInput = document.getElementById('md-input');
+        const previewBox = document.getElementById('preview-box');
+        const warningText = document.getElementById('edit-warning');
+
+        let isSyncingLeft = false; let isSyncingRight = false;
+        mdInput.addEventListener('scroll', function() {
+            if (!isSyncingLeft && !isLocked) {
+                isSyncingRight = true;
+                const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                previewBox.scrollTop = percentage * (previewBox.scrollHeight - previewBox.clientHeight);
+            }
+            isSyncingLeft = false;
+        });
+        previewBox.addEventListener('scroll', function() {
+            if (!isSyncingRight && !isLocked) {
+                isSyncingLeft = true;
+                const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                mdInput.scrollTop = percentage * (mdInput.scrollHeight - mdInput.clientHeight);
+            }
+            isSyncingRight = false;
+        });
+
+        function toggleLock() {
+            isLocked = !isLocked;
+            const btn = document.getElementById('lock-btn');
+            const indicator = document.getElementById('lock-indicator');
+            if (isLocked) {
+                btn.innerText = "🔓 解除锁定(恢复Markdown同步)";
+                indicator.innerText = "自由精修中";
+                indicator.className = "lock-status lock-true";
+            } else {
+                btn.innerText = "🔒 锁定同步(开始自由精修)";
+                indicator.innerText = "同步中";
+                indicator.className = "lock-status lock-false";
+                renderContent();
+            }
+        }
+
+        function formatText(command, value = null) {
+            previewBox.focus();
+            const bypassSelectionCheck = ['undo', 'redo', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'].includes(command);
+            if (!bypassSelectionCheck) {
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0 || selection.toString().trim().length === 0) {
+                    return alert("💡 请先在右侧面板用鼠标选中需要调整的文字。");
+                }
+            }
+
+            if (!isLocked && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'backColor', 'foreColor', 'fontName', 'fontSize', 'formatBlock', 'indent', 'outdent'].includes(command)) {
+                isUserEditingHtml = true;
+            }
+
+            document.execCommand('styleWithCSS', false, true);
+            if (command === 'backColor' && !document.queryCommandSupported('backColor')) {
+                command = 'hiliteColor';
+            }
+            document.execCommand(command, false, value);
+            previewBox.focus();
+        }
+
+        function rawInsertImage(src) {
+            if (!isLocked) toggleLock();
+            previewBox.focus();
+            const uniqueId = 'img_' + Date.now();
+            const imgHtml = `<img src="${src}" id="${uniqueId}" style="width: 80%; display: block; margin: 12px auto;" /><p><br></p>`;
+            document.execCommand('insertHTML', false, imgHtml);
+            setTimeout(() => {
+                const imgElement = document.getElementById(uniqueId);
+                if (imgElement) setupImageEvent(imgElement);
+            }, 100);
+        }
+
+        function insertLocalImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { rawInsertImage(e.target.result); };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = '';
+        }
+
+        function openImgUrlModal() {
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('img-modal').style.display = 'block';
+            document.getElementById('img-url-input').focus();
+        }
+        function closeImgUrlModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('img-modal').style.display = 'none';
+            document.getElementById('img-url-input').value = '';
+        }
+        function insertNetworkImage() {
+            const url = document.getElementById('img-url-input').value.trim();
+            if (url) rawInsertImage(url);
+            closeImgUrlModal();
+        }
+
+        function setupImageEvent(img) {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (activeImage) activeImage.classList.remove('selected-img');
+                activeImage = img;
+                activeImage.classList.add('selected-img');
+
+                const rect = img.getBoundingClientRect();
+                const ctrlPanel = document.getElementById('img-ctrl');
+                ctrlPanel.style.display = 'flex';
+
+                ctrlPanel.style.left = `${rect.left + window.scrollX + (rect.width - ctrlPanel.offsetWidth)/2}px`;
+                ctrlPanel.style.top = `${rect.top + window.scrollY - 50}px`;
+
+                const currentWidth = img.style.width ? parseInt(img.style.width) : 80;
+                document.getElementById('img-width-slider').value = currentWidth;
+                document.getElementById('img-width-val').innerText = currentWidth;
+            });
+        }
+
+        document.addEventListener('click', function() {
+            if (activeImage) { activeImage.classList.remove('selected-img'); activeImage = null; }
+            document.getElementById('img-ctrl').style.display = 'none';
+        });
+
+        document.getElementById('img-width-slider').addEventListener('input', function(e) {
+            if (activeImage) {
+                const val = e.target.value;
+                activeImage.style.width = val + '%';
+                document.getElementById('img-width-val').innerText = val;
+            }
+        });
+
+        function setImgAlign(align) {
+            if (activeImage) {
+                if (align === 'left') {
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px auto 12px 0';
+                } else if (align === 'right') {
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px 0 12px auto';
+                } else {
+                    activeImage.style.display = 'block';
+                    activeImage.style.margin = '12px auto';
+                }
+
+                setTimeout(() => {
+                    const rect = activeImage.getBoundingClientRect();
+                    const ctrlPanel = document.getElementById('img-ctrl');
+                    ctrlPanel.style.left = `${rect.left + window.scrollX + (rect.width - ctrlPanel.offsetWidth)/2}px`;
+                    ctrlPanel.style.top = `${rect.top + window.scrollY - 50}px`;
+                }, 60);
+            }
+        }
+
+        function deleteSelectedImg() {
+            if (activeImage) {
+                activeImage.remove();
+                document.getElementById('img-ctrl').style.display = 'none';
+                activeImage = null;
+            }
+        }
+
+        function bindExistingImages() {
+            const imgs = previewBox.getElementsByTagName('img');
+            for (let img of imgs) {
+                setupImageEvent(img);
+            }
+        }
+
+        function renderContent() {
+            if (typeof marked === 'undefined' || isLocked) return;
+            if (isUserEditingHtml) {
+                warningText.style.display = 'inline';
+                setTimeout(() => { warningText.style.display = 'none'; }, 4000);
+                isUserEditingHtml = false;
+            }
+
+            let rawText = mdInput.value;
+            const mathBlocks = [];
+
+            rawText = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match) => { mathBlocks.push(match); return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`; });
+            rawText = rawText.replace(/\$((?:\\.|[^$\\])*)\$/g, (match) => { mathBlocks.push(match); return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`; });
+
+            let parsedHtml = marked.parse(rawText);
+            mathBlocks.forEach((block, index) => { parsedHtml = parsedHtml.replace(`@@MATH_BLOCK_${index}@@`, block); });
+
+            previewBox.innerHTML = parsedHtml;
+
+            if (window.renderMathInElement) {
+                renderMathInElement(previewBox, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false,
+                    output: 'html-mathml'
+                });
+            }
+            bindExistingImages();
+        }
+
+        mdInput.addEventListener('input', function() {
+            renderContent();
+            debouncedSave();
+        });
+
+        document.getElementById('global-font-select').addEventListener('change', (e) => {
+            Array.from(previewBox.classList).forEach(cls => { if (cls.startsWith('font-')) previewBox.classList.remove(cls); });
+            if(e.target.value) previewBox.classList.add(e.target.value);
+        });
+
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            Array.from(previewBox.classList).forEach(cls => { if (cls.startsWith('theme-')) previewBox.classList.remove(cls); });
+            if (e.target.value !== 'theme-default') previewBox.classList.add(e.target.value);
+        });
+
+        function exportMD() {
+            if (!mdInput.value) return alert("内容为空！");
+            const blob = new Blob([mdInput.value], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Kevin_notes.md'; a.click(); URL.revokeObjectURL(url);
+        }
+
+        function getWatermarkImage() {
+            const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 200;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#a0a0a0'; ctx.textAlign = 'center';
+            ctx.font = '28px STSong, SimSun, sans-serif'; ctx.fillText('由Kevin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
+            ctx.font = 'italic 24px STSong, SimSun, sans-serif'; ctx.fillText('Generé par le transcripteur Kevin Markdown. Bon courage à vous !', 800, 130);
+            return canvas.toDataURL('image/png');
+        }
+
+        function exportPDF() {
+            if (typeof html2pdf === 'undefined') return alert("渲染引擎加载中，请稍候...");
+            if (!previewBox.innerHTML) return alert("请先输入内容");
+
+            let customFilename = prompt("请输入导出的 PDF 文件名称（无需输入 .pdf 后缀）：", "Kevin_Document");
+            if (customFilename === null) return;
+            customFilename = customFilename.trim() === "" ? "Kevin_Document" : customFilename.trim();
+
+            const marginValue = parseFloat(document.getElementById('margin-select').value);
+            const pdfBgColor = document.getElementById('pdf-bg-select').value;
+
+            const opt = {
+                margin: [marginValue, marginValue, marginValue + 15, marginValue],
+                filename: customFilename + '.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                pagebreak: { mode: ['css', 'legacy'] },
+                html2canvas: { scale: 4, dpi: 300, useCORS: true, letterRendering: true, backgroundColor: pdfBgColor },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+            };
+
+            previewBox.style.padding = '0';
+            const originalBg = previewBox.style.backgroundColor;
+            previewBox.style.backgroundColor = pdfBgColor;
+
+            html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                const watermarkImg = getWatermarkImage();
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
+                }
+
+                previewBox.style.padding = '40px';
+                previewBox.style.backgroundColor = originalBg;
+            }).save();
+        }
+
+        // ==================== 初始化 ====================
+        initAuth();
+    </script>
+</body>
+</html>
