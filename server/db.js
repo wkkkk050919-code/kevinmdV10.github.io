@@ -33,7 +33,6 @@ async function initDb() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         action_content TEXT NOT NULL,
-        operation_type TEXT DEFAULT 'save',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);

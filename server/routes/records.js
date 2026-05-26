@@ -8,7 +8,7 @@ router.use(authMiddleware);
 
 router.post('/', async (req, res) => {
   try {
-    const { content, operation_type } = req.body;
+    const { content } = req.body;
     const userId = req.user.id;
 
     if (!content) {
@@ -16,8 +16,8 @@ router.post('/', async (req, res) => {
     }
 
     const result = await run(
-      'INSERT INTO user_records (user_id, action_content, operation_type) VALUES ($1, $2, $3) RETURNING id',
-      [userId, content, operation_type || 'save']
+      'INSERT INTO user_records (user_id, action_content) VALUES ($1, $2) RETURNING id',
+      [userId, content]
     );
 
     res.status(201).json({ id: result.lastInsertRowid, message: '记录保存成功' });
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
 
     const records = await queryAll(
-      'SELECT id, action_content, operation_type, created_at FROM user_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+      'SELECT id, action_content, created_at FROM user_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
       [userId, limit, offset]
     );
 

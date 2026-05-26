@@ -664,7 +664,7 @@ Type your Markdown code here..."></textarea>
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + authToken
                     },
-                    body: JSON.stringify({ content, operation_type: operationType || 'save' })
+                    body: JSON.stringify({ content })
                 });
             } catch (e) {
                 // 静默失败, 不打扰用户编辑
@@ -701,7 +701,6 @@ Type your Markdown code here..."></textarea>
                             <button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})" title="删除">✕</button>
                             <div class="hi-date">${date}</div>
                             <div class="hi-preview">${escapeHtml(preview)}${r.action_content.length > 80 ? '...' : ''}</div>
-                            <div class="hi-type">${r.operation_type}</div>
                         </div>
                     `;
                 }).join('');
