@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
     }
 
     const result = await run(
-      'INSERT INTO user_records (user_id, content, operation_type) VALUES ($1, $2, $3) RETURNING id',
+      'INSERT INTO user_records (user_id, action_content, operation_type) VALUES ($1, $2, $3) RETURNING id',
       [userId, content, operation_type || 'save']
     );
 
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
 
     const records = await queryAll(
-      'SELECT id, content, operation_type, created_at FROM user_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+      'SELECT id, action_content, operation_type, created_at FROM user_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
       [userId, limit, offset]
     );
 

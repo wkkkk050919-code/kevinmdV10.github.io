@@ -695,12 +695,12 @@ Type your Markdown code here..."></textarea>
 
                 listEl.innerHTML = data.records.map(r => {
                     const date = new Date(r.created_at).toLocaleString('zh-CN');
-                    const preview = r.content.replace(/\n/g, ' ').substring(0, 80);
+                    const preview = r.action_content.replace(/\n/g, ' ').substring(0, 80);
                     return `
-                        <div class="history-item" onclick="loadRecord(${r.id}, '${escapeHtml(r.content.replace(/'/g, "\\'").replace(/\n/g, '\\n'))}')">
+                        <div class="history-item" onclick="loadRecord(${r.id}, '${escapeHtml(r.action_content.replace(/'/g, "\\'").replace(/\n/g, '\\n'))}')">
                             <button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})" title="删除">✕</button>
                             <div class="hi-date">${date}</div>
-                            <div class="hi-preview">${escapeHtml(preview)}${r.content.length > 80 ? '...' : ''}</div>
+                            <div class="hi-preview">${escapeHtml(preview)}${r.action_content.length > 80 ? '...' : ''}</div>
                             <div class="hi-type">${r.operation_type}</div>
                         </div>
                     `;

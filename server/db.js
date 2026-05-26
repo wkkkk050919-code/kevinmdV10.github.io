@@ -32,7 +32,7 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS user_records (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        content TEXT NOT NULL,
+        action_content TEXT NOT NULL,
         operation_type TEXT DEFAULT 'save',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
