@@ -697,13 +697,31 @@ Type your Markdown code here..."></textarea>
                     const date = new Date(r.created_at).toLocaleString('zh-CN');
                     const preview = r.action_content.replace(/\n/g, ' ').substring(0, 80);
                     return `
-                        <div class="history-item" onclick="loadRecord(${r.id}, '${escapeHtml(r.action_content.replace(/'/g, "\\'").replace(/\n/g, '\\n'))}')">
-                            <button class="hi-delete" onclick="event.stopPropagation();deleteRecord(${r.id})" title="删除">✕</button>
+                        <div class="history-item" data-id="${r.id}" data-content="${encodeURIComponent(r.action_content)}">
+                            <button class="hi-delete" data-id="${r.id}" title="删除">✕</button>
                             <div class="hi-date">${date}</div>
                             <div class="hi-preview">${escapeHtml(preview)}${r.action_content.length > 80 ? '...' : ''}</div>
                         </div>
                     `;
                 }).join('');
+
+                // 事件委托：点击历史项加载内容
+                listEl.querySelectorAll('.history-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('hi-delete')) return;
+                        const content = decodeURIComponent(this.dataset.content);
+                        mdInput.value = content;
+                        renderContent();
+                        closeHistoryPanel();
+                    });
+                });
+                // 事件委托：删除按钮
+                listEl.querySelectorAll('.hi-delete').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteRecord(this.dataset.id);
+                    });
+                });
             } catch (e) {
                 document.getElementById('history-list').innerHTML = '<div class="history-empty">加载失败: ' + escapeHtml(e.message) + '</div>';
             }
@@ -713,12 +731,6 @@ Type your Markdown code here..."></textarea>
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
-        }
-
-        function loadRecord(id, content) {
-            mdInput.value = content;
-            renderContent();
-            closeHistoryPanel();
         }
 
         async function deleteRecord(id) {
