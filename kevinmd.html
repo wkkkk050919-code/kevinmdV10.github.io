@@ -471,7 +471,7 @@ Type your Markdown code here..."></textarea>
                 <label>邮箱</label>
                 <input type="email" id="auth-email" placeholder="请输入邮箱">
             </div>
-            <div class="form-group">
+            <div class="form-group" id="username-group">
                 <label>用户名</label>
                 <input type="text" id="auth-username" placeholder="请输入用户名">
             </div>
@@ -544,7 +544,7 @@ Type your Markdown code here..."></textarea>
                 btnLogout.style.display = 'inline-block';
                 btnHistory.style.display = 'inline-block';
                 greeting.style.display = 'inline';
-                greeting.textContent = '👤 ' + currentUser.username;
+                greeting.textContent = '👤 ' + (currentUser.email || currentUser.username);
             } else {
                 btnLogin.style.display = 'inline-block';
                 btnLogout.style.display = 'none';
@@ -561,6 +561,7 @@ Type your Markdown code here..."></textarea>
             const submitBtn = document.getElementById('auth-submit-btn');
             const switchEl = document.getElementById('auth-switch');
             const emailGroup = document.getElementById('email-group');
+            const usernameGroup = document.getElementById('username-group');
             const errorEl = document.getElementById('auth-error');
 
             errorEl.textContent = '';
@@ -571,11 +572,13 @@ Type your Markdown code here..."></textarea>
             if (mode === 'login') {
                 title.textContent = '登录';
                 submitBtn.textContent = '登录';
-                emailGroup.style.display = 'none';
+                usernameGroup.style.display = 'none';
+                emailGroup.style.display = 'block';
                 switchEl.innerHTML = '<span>还没有账号？</span><a onclick="switchAuthMode(\'register\')">立即注册</a>';
             } else {
                 title.textContent = '注册';
                 submitBtn.textContent = '注册';
+                usernameGroup.style.display = 'block';
                 emailGroup.style.display = 'block';
                 switchEl.innerHTML = '<span>已有账号？</span><a onclick="switchAuthMode(\'login\')">立即登录</a>';
             }
@@ -599,13 +602,16 @@ Type your Markdown code here..."></textarea>
             const password = document.getElementById('auth-password').value;
             const email = document.getElementById('auth-email').value.trim();
 
-            if (!username || !password) {
-                errorEl.textContent = '请填写用户名和密码';
-                return;
-            }
-            if (authMode === 'register' && !email) {
-                errorEl.textContent = '请填写邮箱';
-                return;
+            if (authMode === 'login') {
+                if (!email || !password) {
+                    errorEl.textContent = '请填写邮箱和密码';
+                    return;
+                }
+            } else {
+                if (!username || !email || !password) {
+                    errorEl.textContent = '请填写用户名、邮箱和密码';
+                    return;
+                }
             }
             if (password.length < 6) {
                 errorEl.textContent = '密码长度至少为6位';
@@ -614,7 +620,7 @@ Type your Markdown code here..."></textarea>
 
             const endpoint = authMode === 'login' ? '/login' : '/register';
             const body = authMode === 'login'
-                ? { username, password }
+                ? { email, password }
                 : { username, email, password };
 
             try {

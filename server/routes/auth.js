@@ -27,10 +27,10 @@ router.post('/register', async (req, res) => {
       [username, email, password_hash]
     );
 
-    const user = { id: result.lastInsertRowid, username };
+    const user = { id: result.lastInsertRowid, username, email };
     const token = generateToken(user);
 
-    res.status(201).json({ message: '注册成功', token, user: { id: user.id, username } });
+    res.status(201).json({ message: '注册成功', token, user: { id: user.id, username, email } });
   } catch (err) {
     console.error('注册错误:', err);
     res.status(500).json({ error: '服务器内部错误' });
@@ -39,15 +39,15 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: '用户名和密码不能为空' });
+    if (!email || !password) {
+      return res.status(400).json({ error: '邮箱和密码不能为空' });
     }
 
-    const user = await queryOne('SELECT * FROM users WHERE username = $1', [username]);
+    const user = await queryOne('SELECT * FROM users WHERE email = $1', [email]);
     if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-      return res.status(401).json({ error: '用户名或密码错误' });
+      return res.status(401).json({ error: '邮箱或密码错误' });
     }
 
     const token = generateToken(user);
