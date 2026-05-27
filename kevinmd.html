@@ -1084,7 +1084,13 @@ Type your Markdown code here..."></textarea>
                     blockquote { border-left: 3pt solid #ccc; margin: 8pt 0; padding-left: 12pt; color: #666; }
                 </style>
                 </head>
-                <body>${previewBox.innerHTML}</body>
+                <body>
+                    ${previewBox.innerHTML}
+                    <div style="text-align:center; color:#a0a0a0; font-size:9pt; margin-top:30pt; padding-top:12pt; border-top:1px solid #ddd;">
+                        <p style="margin:4pt 0;">由Kevin设计的Markdown转写器生成，祝你生活愉快</p>
+                        <p style="margin:4pt 0; font-style:italic;">Generé par le transcripteur Kevin Markdown. Bon courage à vous !</p>
+                    </div>
+                </body>
                 </html>`;
 
             const blob = new Blob(['﻿' + wordHTML], { type: 'application/msword' });
