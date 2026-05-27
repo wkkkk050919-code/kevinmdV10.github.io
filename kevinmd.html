@@ -303,6 +303,7 @@
 
         <button onclick="exportMD()" class="btn-primary" title="下载 .md 源文件">⬇️ MD</button>
         <button onclick="exportPDF()" class="btn-danger" title="导出防裁切、带双语水印的 PDF">📥 PDF</button>
+        <button onclick="exportWord()" class="btn-primary" title="导出为 Word 文档">📄 Word</button>
 
         <!-- Auth buttons -->
         <span id="user-greeting" class="user-greeting" style="display:none;"></span>
@@ -1054,6 +1055,47 @@ Type your Markdown code here..."></textarea>
                 previewBox.style.padding = '40px';
                 previewBox.style.backgroundColor = originalBg;
             }).save();
+        }
+
+        function exportWord() {
+            if (!previewBox.innerHTML) return alert("请先输入内容");
+
+            let customFilename = prompt("请输入导出的 Word 文件名称（无需输入 .doc 后缀）：", "Kevin_Document");
+            if (customFilename === null) return;
+            customFilename = customFilename.trim() === "" ? "Kevin_Document" : customFilename.trim();
+
+            const wordHTML = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                      xmlns:w="urn:schemas-microsoft-com:office:word"
+                      xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8">
+                <title>${customFilename}</title>
+                <style>
+                    @page { size: A4; margin: 20mm; }
+                    body { font-family: "Times New Roman", SimSun, serif; font-size: 14pt; line-height: 1.8; color: #333; }
+                    h1 { font-size: 22pt; margin: 18pt 0 12pt; }
+                    h2 { font-size: 18pt; margin: 14pt 0 10pt; }
+                    h3 { font-size: 15pt; margin: 12pt 0 8pt; }
+                    pre, code { font-family: "Courier New", monospace; font-size: 11pt; background: #f5f5f5; }
+                    pre { padding: 8pt; white-space: pre-wrap; word-wrap: break-word; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th, td { border: 1px solid #999; padding: 6pt; }
+                    img { max-width: 100%; }
+                    blockquote { border-left: 3pt solid #ccc; margin: 8pt 0; padding-left: 12pt; color: #666; }
+                </style>
+                </head>
+                <body>${previewBox.innerHTML}</body>
+                </html>`;
+
+            const blob = new Blob(['﻿' + wordHTML], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = customFilename + '.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         // ==================== 初始化 ====================
