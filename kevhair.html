@@ -89,6 +89,13 @@
             margin-left: 2px;
         }
 
+        #quiz-box {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
         #progress {
             font-size: 14px;
             color: #7a8286;
@@ -455,7 +462,7 @@
         const input = document.getElementById('password-input').value.trim();
         if (input === 'Kevin') {
             document.getElementById('password-gate').style.display = 'none';
-            document.getElementById('quiz-box').style.display = 'block';
+            document.getElementById('quiz-box').style.display = 'flex';
             loadQuestion();
         } else {
             document.getElementById('gate-error').innerText = '口令错误，请重试';
