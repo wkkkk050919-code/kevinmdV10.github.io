@@ -103,8 +103,12 @@
         th, td { border: 1px solid rgba(0,0,0,0.08); padding: 10px 12px; text-align: left; }
         th { background-color: rgba(0, 0, 0, 0.02); font-weight: 600; }
 
-        .preview-content p, .preview-content li, .preview-content pre, .preview-content table, .preview-content tr, .preview-content h1, .preview-content h2, .preview-content h3 {
+        .preview-content h1, .preview-content h2, .preview-content h3,
+        .preview-content pre, .preview-content table, .preview-content img {
             page-break-inside: avoid; break-inside: avoid;
+        }
+        .preview-content h1, .preview-content h2, .preview-content h3 {
+            page-break-after: avoid; break-after: avoid;
         }
 
         .font-sans { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
@@ -1034,12 +1038,12 @@ Type your Markdown code here..."></textarea>
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
                 image: { type: 'jpeg', quality: 1 },
-                pagebreak: { mode: ['css', 'legacy'] },
-                html2canvas: { scale: 3, dpi: 300, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
+                pagebreak: { mode: ['css'] },
+                html2canvas: { scale: 3, dpi: 300, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, windowWidth: previewBox.scrollWidth },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
-            // 临时修复导出样式，避免字符重叠
+            // 临时修复导出样式，避免字符重叠和空白页
             const originalPad = previewBox.style.padding;
             const originalBg = previewBox.style.backgroundColor;
             const originalWS = previewBox.style.whiteSpace;
@@ -1047,6 +1051,11 @@ Type your Markdown code here..."></textarea>
             const allPara = previewBox.querySelectorAll('p, li, td, th, blockquote');
             const paraOrigins = [];
             allPara.forEach(el => { paraOrigins.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
+
+            // 导出时确保段落和列表项可以自然跨页
+            const breakables = previewBox.querySelectorAll('p, li');
+            const breakOrigins = [];
+            breakables.forEach(el => { breakOrigins.push(el.style.breakInside); el.style.breakInside = 'auto'; });
 
             previewBox.style.padding = '20px';
             previewBox.style.backgroundColor = pdfBgColor;
@@ -1070,6 +1079,7 @@ Type your Markdown code here..."></textarea>
                 previewBox.style.whiteSpace = originalWS;
                 previewBox.style.letterSpacing = originalLS || '';
                 allPara.forEach((el, i) => { el.style.whiteSpace = paraOrigins[i]; });
+                breakables.forEach((el, i) => { el.style.breakInside = breakOrigins[i]; });
             }).save();
         }
 
