@@ -205,12 +205,87 @@
             background: rgba(117, 129, 132, 0.9);
             transform: translateY(-2px);
         }
+
+        /* 口令入口 */
+        #password-gate {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #password-gate .gate-label {
+            font-size: 15px;
+            color: #5c6366;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .gate-input-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        #password-input {
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.5);
+            font-size: 16px;
+            outline: none;
+            color: #3b4245;
+            text-align: center;
+            letter-spacing: 3px;
+            width: 180px;
+            backdrop-filter: blur(10px);
+        }
+        #password-input:focus {
+            border-color: rgba(0,0,0,0.15);
+            background: rgba(255,255,255,0.8);
+        }
+        .gate-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            background: #000;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .gate-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+        #gate-error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div class="glass-container">
-    <div id="quiz-box">
+
+    <div id="password-gate">
+        <div class="ph-logo">
+            <div class="ph-logo-inner">
+                <span class="ph-logo-white">Kevin</span>
+                <span class="ph-logo-accent">Hair</span>
+            </div>
+        </div>
+        <div class="gate-label">请输入口令以继续</div>
+        <div class="gate-input-row">
+            <input type="password" id="password-input" placeholder="请输入口令" maxlength="20" onkeydown="if(event.key==='Enter')checkPassword()">
+            <button class="gate-btn" onclick="checkPassword()">进入</button>
+        </div>
+        <div id="gate-error"></div>
+    </div>
+
+    <div id="quiz-box" style="display:none;">
         <div class="ph-logo">
             <div class="ph-logo-inner">
                 <span class="ph-logo-white">Kevin</span>
@@ -376,6 +451,19 @@
     let currentQ = 0;
     let scores = { F: 0, H: 0, P: 0, G: 0, R: 0, T: 0, S: 0, E: 0 };
 
+    function checkPassword() {
+        const input = document.getElementById('password-input').value.trim();
+        if (input === 'Kevin') {
+            document.getElementById('password-gate').style.display = 'none';
+            document.getElementById('quiz-box').style.display = 'block';
+            loadQuestion();
+        } else {
+            document.getElementById('gate-error').innerText = '口令错误，请重试';
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+        }
+    }
+
     function loadQuestion() {
         if (currentQ >= questions.length) {
             showResult();
@@ -419,8 +507,6 @@
         document.getElementById('res-desc').innerText = resultData.desc;
     }
 
-    // 启动第一题
-    loadQuestion();
 </script>
 
 </body>
