@@ -1,6 +1,0 @@
-{
-  "name": "LexiRead",
-  "description": "A minimalist bilingual reading companion and vocabulary builder with AI-powered word lookup.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -9,3 +9,5 @@ dist/
 *.log
 *.dmg
 DATABASE_URL.env
+kevhair/
+Vibe coding-Module/
