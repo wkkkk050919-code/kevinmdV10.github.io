@@ -1034,15 +1034,12 @@ Type your Markdown code here..."></textarea>
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
 
-            // 固定导出宽度 = A4 内容区 (~170mm ≈ 643px)，保证 canvas 文字测量一致
-            const exportWidth = 643;
-
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 pagebreak: { mode: ['css'] },
-                html2canvas: { scale: 4, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, windowWidth: exportWidth },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
@@ -1053,11 +1050,10 @@ Type your Markdown code here..."></textarea>
                 ws: previewBox.style.whiteSpace,
                 ls: previewBox.style.letterSpacing,
                 wb: previewBox.style.wordBreak,
-                ow: previewBox.style.overflowWrap,
-                width: previewBox.style.width
+                ow: previewBox.style.overflowWrap
             };
 
-            // 所有文本元素统一重置，防止 pre-wrap / word-break 导致的画布测量偏差
+            // 所有文本元素重置 white-space，防止 pre-wrap 导致画布文字测量偏差
             const textEls = previewBox.querySelectorAll('p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, a, code, pre, div');
             const savedWs = [];
             textEls.forEach(el => { savedWs.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
@@ -1067,14 +1063,13 @@ Type your Markdown code here..."></textarea>
             const savedBreak = [];
             breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
 
-            // 固定宽度 + 样式重置
+            // 样式重置
             previewBox.style.padding = '24px';
             previewBox.style.backgroundColor = pdfBgColor;
             previewBox.style.whiteSpace = 'normal';
             previewBox.style.letterSpacing = 'normal';
             previewBox.style.wordBreak = 'normal';
             previewBox.style.overflowWrap = 'normal';
-            previewBox.style.width = exportWidth + 'px';
 
             html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
                 const totalPages = pdf.internal.getNumberOfPages();
@@ -1094,10 +1089,8 @@ Type your Markdown code here..."></textarea>
                 previewBox.style.letterSpacing = originals.ls || '';
                 previewBox.style.wordBreak = originals.wb || '';
                 previewBox.style.overflowWrap = originals.ow || '';
-                previewBox.style.width = originals.width || '';
                 textEls.forEach((el, i) => { el.style.whiteSpace = savedWs[i]; });
                 breakables.forEach((el, i) => { el.style.breakInside = savedBreak[i]; });
-                breakables.forEach((el, i) => { el.style.breakInside = breakOrigins[i]; });
             }).save();
         }
 
