@@ -1037,9 +1037,9 @@ Type your Markdown code here..."></textarea>
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
-                image: { type: 'jpeg', quality: 1 },
+                image: { type: 'png' },
                 pagebreak: { mode: ['css'] },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
+                html2canvas: { scale: 3, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
