@@ -1034,15 +1034,6 @@ Type your Markdown code here..."></textarea>
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
 
-            const opt = {
-                margin: [marginValue, marginValue, marginValue + 15, marginValue],
-                filename: customFilename + '.pdf',
-                image: { type: 'png' },
-                pagebreak: { mode: ['css'] },
-                html2canvas: { scale: 3, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-            };
-
             // 保存原始样式
             const originals = {
                 padding: previewBox.style.padding,
@@ -1063,13 +1054,29 @@ Type your Markdown code here..."></textarea>
             const savedBreak = [];
             breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
 
-            // 样式重置
+            // 样式重置后先让浏览器重排，再获取真实高度
             previewBox.style.padding = '24px';
             previewBox.style.backgroundColor = pdfBgColor;
             previewBox.style.whiteSpace = 'normal';
             previewBox.style.letterSpacing = 'normal';
             previewBox.style.wordBreak = 'normal';
             previewBox.style.overflowWrap = 'normal';
+            previewBox.offsetHeight; // 强制重排
+
+            // 动态 scale：短文档 scale 4 超清晰，长文档等比降低避开 canvas 上限
+            const contentHeight = previewBox.scrollHeight;
+            const maxCanvasDim = 16384; // Safari 安全上限
+            const maxScale = Math.floor(maxCanvasDim / (contentHeight || 1));
+            const scale = Math.min(4, Math.max(2, maxScale));
+
+            const opt = {
+                margin: [marginValue, marginValue, marginValue + 15, marginValue],
+                filename: customFilename + '.pdf',
+                image: { type: 'png' },
+                pagebreak: { mode: ['css'] },
+                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+            };
 
             html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
                 const totalPages = pdf.internal.getNumberOfPages();
