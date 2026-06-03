@@ -1034,29 +1034,42 @@ Type your Markdown code here..."></textarea>
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
 
-            // 临时修复：段落 white-space 和 break-inside，防止文字重叠和空白页
-            const paras = previewBox.querySelectorAll('p, li');
-            const savedWs = [], savedBi = [];
-            paras.forEach(el => {
-                savedWs.push(el.style.whiteSpace);
-                savedBi.push(el.style.breakInside);
-                el.style.whiteSpace = 'normal';
-                el.style.breakInside = 'auto';
-            });
-
-            const savedPad = previewBox.style.padding;
-            const savedBg = previewBox.style.backgroundColor;
-            previewBox.style.padding = '24px';
-            previewBox.style.backgroundColor = pdfBgColor;
-
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
-                image: { type: 'png' },
+                image: { type: 'jpeg', quality: 1 },
                 pagebreak: { mode: ['css'] },
                 html2canvas: { scale: 2, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
+
+            // 保存原始样式
+            const originals = {
+                padding: previewBox.style.padding,
+                bg: previewBox.style.backgroundColor,
+                ws: previewBox.style.whiteSpace,
+                ls: previewBox.style.letterSpacing,
+                wb: previewBox.style.wordBreak,
+                ow: previewBox.style.overflowWrap
+            };
+
+            // 所有文本元素重置 white-space，防止 pre-wrap 导致画布文字测量偏差
+            const textEls = previewBox.querySelectorAll('p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, a, code, pre, div');
+            const savedWs = [];
+            textEls.forEach(el => { savedWs.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
+
+            // 段落自然跨页
+            const breakables = previewBox.querySelectorAll('p, li');
+            const savedBreak = [];
+            breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
+
+            // 样式重置
+            previewBox.style.padding = '24px';
+            previewBox.style.backgroundColor = pdfBgColor;
+            previewBox.style.whiteSpace = 'normal';
+            previewBox.style.letterSpacing = 'normal';
+            previewBox.style.wordBreak = 'normal';
+            previewBox.style.overflowWrap = 'normal';
 
             html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
                 const totalPages = pdf.internal.getNumberOfPages();
@@ -1069,13 +1082,15 @@ Type your Markdown code here..."></textarea>
                     pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
                 }
 
-                // 恢复
-                previewBox.style.padding = savedPad || '40px';
-                previewBox.style.backgroundColor = savedBg;
-                paras.forEach((el, i) => {
-                    el.style.whiteSpace = savedWs[i];
-                    el.style.breakInside = savedBi[i];
-                });
+                // 恢复原始样式
+                previewBox.style.padding = originals.padding || '40px';
+                previewBox.style.backgroundColor = originals.bg;
+                previewBox.style.whiteSpace = originals.ws;
+                previewBox.style.letterSpacing = originals.ls || '';
+                previewBox.style.wordBreak = originals.wb || '';
+                previewBox.style.overflowWrap = originals.ow || '';
+                textEls.forEach((el, i) => { el.style.whiteSpace = savedWs[i]; });
+                breakables.forEach((el, i) => { el.style.breakInside = savedBreak[i]; });
             }).save();
         }
 
