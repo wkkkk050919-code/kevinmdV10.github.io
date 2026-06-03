@@ -1077,7 +1077,7 @@ Type your Markdown code here..."></textarea>
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
                 image: { type: 'png' },
-                pagebreak: { mode: ['css'] },
+                pagebreak: { mode: ['avoid-all', 'css'] },
                 html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
