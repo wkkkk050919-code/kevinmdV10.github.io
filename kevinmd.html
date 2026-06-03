@@ -1054,10 +1054,7 @@ Type your Markdown code here..."></textarea>
             const savedBreak = [];
             breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
 
-            // 固定宽度对齐 A4 内容区 (210mm - 40mm边距 = 170mm ≈ 643px)，保证 canvas 和 PDF 一一对应不模糊
-            const contentWidth = 643;
-            const savedWidth = previewBox.style.width;
-            previewBox.style.width = contentWidth + 'px';
+            // 样式重置，保持自然宽度
             previewBox.style.padding = '24px';
             previewBox.style.backgroundColor = pdfBgColor;
             previewBox.style.whiteSpace = 'normal';
@@ -1066,18 +1063,21 @@ Type your Markdown code here..."></textarea>
             previewBox.style.overflowWrap = 'normal';
             previewBox.offsetHeight; // 强制重排
 
-            // 动态 scale：短文档 scale 4 超清晰，长文档等比降低避开 canvas 上限
-            const contentHeight = previewBox.scrollHeight;
+            // 用预览区自然宽度做 canvas，宽像素够多才清晰
+            const natWidth = previewBox.scrollWidth;
+            const natHeight = previewBox.scrollHeight;
+
+            // 动态 scale：默认 4，长文档降级避免 canvas 超浏览器上限
             const maxCanvasDim = 16384; // Safari 安全上限
-            const maxScale = Math.floor(maxCanvasDim / (contentHeight || 1));
-            const scale = Math.min(4, Math.max(2, maxScale));
+            const maxScaleByHeight = Math.floor(maxCanvasDim / Math.max(natHeight, 1));
+            const scale = Math.min(4, Math.max(2, maxScaleByHeight));
 
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
                 image: { type: 'png' },
                 pagebreak: { mode: ['css'] },
-                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, width: contentWidth, windowWidth: contentWidth },
+                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, windowWidth: natWidth },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
@@ -1093,7 +1093,6 @@ Type your Markdown code here..."></textarea>
                 }
 
                 // 恢复原始样式
-                previewBox.style.width = savedWidth || '';
                 previewBox.style.padding = originals.padding || '40px';
                 previewBox.style.backgroundColor = originals.bg;
                 previewBox.style.whiteSpace = originals.ws;
