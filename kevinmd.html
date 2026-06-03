@@ -1063,13 +1063,14 @@ Type your Markdown code here..."></textarea>
             previewBox.style.overflowWrap = 'normal';
             previewBox.offsetHeight; // 强制重排
 
-            // 动态 scale：默认 3（清晰），超长文档退回 2（确保完整）
+            // 动态 scale：默认 4（高清晰），逐级降 3→2 确保超长文档不截断
             const natH = previewBox.scrollHeight;
             const natW = previewBox.scrollWidth;
             const MAX_DIM = 16384, MAX_AREA = 40000000;
-            let scale = 3;
-            if (scale * natH > MAX_DIM || (scale * natW) * (scale * natH) > MAX_AREA) {
-                scale = 2;
+            let scale = 4;
+            while (scale > 2) {
+                if (scale * natH <= MAX_DIM && (scale * natW) * (scale * natH) <= MAX_AREA) break;
+                scale--;
             }
 
             const opt = {
