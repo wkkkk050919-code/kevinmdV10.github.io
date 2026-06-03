@@ -1063,14 +1063,16 @@ Type your Markdown code here..."></textarea>
             previewBox.style.overflowWrap = 'normal';
             previewBox.offsetHeight; // 强制重排
 
-            // 用预览区自然宽度做 canvas，宽像素够多才清晰
+            // 双约束计算 scale：维度上限 + 总像素上限，宁降分辨率不截断内容
             const natWidth = previewBox.scrollWidth;
             const natHeight = previewBox.scrollHeight;
+            const MAX_DIM   = 16384;       // Safari 单维度上限
+            const MAX_AREA  = 40000000;    // 40MP，Safari 67MP 下留安全余量
+            const area      = Math.max(natWidth * natHeight, 1);
 
-            // 动态 scale：默认 4，长文档降级避免 canvas 超浏览器上限
-            const maxCanvasDim = 16384; // Safari 安全上限
-            const maxScaleByHeight = Math.floor(maxCanvasDim / Math.max(natHeight, 1));
-            const scale = Math.min(4, Math.max(2, maxScaleByHeight));
+            const scaleByDim  = Math.floor(MAX_DIM / Math.max(natHeight, 1));
+            const scaleByArea = Math.floor(Math.sqrt(MAX_AREA / area));
+            const scale = Math.max(1, Math.min(4, scaleByDim, scaleByArea));
 
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
