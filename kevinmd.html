@@ -1019,7 +1019,7 @@ Type your Markdown code here..."></textarea>
             const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 200;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = '#a0a0a0'; ctx.textAlign = 'center';
             ctx.font = '28px STSong, SimSun, sans-serif'; ctx.fillText('由Kevin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
-            ctx.font = 'italic 24px STSong, SimSun, sans-serif'; ctx.fillText('Generé par le transcripteur Kevin Markdown. Bon courage à vous !', 800, 130);
+            ctx.font = 'italic 24px STSong, SimSun, sans-serif'; ctx.fillText('Généré par le transcripteur Kevin Markdown. Bon courage à vous !', 800, 130);
             return canvas.toDataURL('image/png');
         }
 
@@ -1054,7 +1054,10 @@ Type your Markdown code here..."></textarea>
             const savedBreak = [];
             breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
 
-            // 样式重置后先让浏览器重排，再获取真实高度
+            // 固定宽度对齐 A4 内容区 (210mm - 40mm边距 = 170mm ≈ 643px)，保证 canvas 和 PDF 一一对应不模糊
+            const contentWidth = 643;
+            const savedWidth = previewBox.style.width;
+            previewBox.style.width = contentWidth + 'px';
             previewBox.style.padding = '24px';
             previewBox.style.backgroundColor = pdfBgColor;
             previewBox.style.whiteSpace = 'normal';
@@ -1074,7 +1077,7 @@ Type your Markdown code here..."></textarea>
                 filename: customFilename + '.pdf',
                 image: { type: 'png' },
                 pagebreak: { mode: ['css'] },
-                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
+                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, width: contentWidth, windowWidth: contentWidth },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
@@ -1090,6 +1093,7 @@ Type your Markdown code here..."></textarea>
                 }
 
                 // 恢复原始样式
+                previewBox.style.width = savedWidth || '';
                 previewBox.style.padding = originals.padding || '40px';
                 previewBox.style.backgroundColor = originals.bg;
                 previewBox.style.whiteSpace = originals.ws;
@@ -1132,7 +1136,7 @@ Type your Markdown code here..."></textarea>
                     ${previewBox.innerHTML}
                     <div style="text-align:center; color:#a0a0a0; font-size:9pt; margin-top:30pt; padding-top:12pt; border-top:1px solid #ddd;">
                         <p style="margin:4pt 0;">由Kevin设计的Markdown转写器生成，祝你生活愉快</p>
-                        <p style="margin:4pt 0; font-style:italic;">Generé par le transcripteur Kevin Markdown. Bon courage à vous !</p>
+                        <p style="margin:4pt 0; font-style:italic;">Généré par le transcripteur Kevin Markdown. Bon courage à vous !</p>
                     </div>
                 </body>
                 </html>`;
