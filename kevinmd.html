@@ -1034,52 +1034,27 @@ Type your Markdown code here..."></textarea>
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
 
-            // 保存原始样式
-            const originals = {
-                padding: previewBox.style.padding,
-                bg: previewBox.style.backgroundColor,
-                ws: previewBox.style.whiteSpace,
-                ls: previewBox.style.letterSpacing,
-                wb: previewBox.style.wordBreak,
-                ow: previewBox.style.overflowWrap
-            };
+            // 临时修复：段落 white-space 和 break-inside，防止文字重叠和空白页
+            const paras = previewBox.querySelectorAll('p, li');
+            const savedWs = [], savedBi = [];
+            paras.forEach(el => {
+                savedWs.push(el.style.whiteSpace);
+                savedBi.push(el.style.breakInside);
+                el.style.whiteSpace = 'normal';
+                el.style.breakInside = 'auto';
+            });
 
-            // 所有文本元素重置 white-space，防止 pre-wrap 导致画布文字测量偏差
-            const textEls = previewBox.querySelectorAll('p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, a, code, pre, div');
-            const savedWs = [];
-            textEls.forEach(el => { savedWs.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
-
-            // 段落自然跨页
-            const breakables = previewBox.querySelectorAll('p, li');
-            const savedBreak = [];
-            breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
-
-            // 样式重置，保持自然宽度
+            const savedPad = previewBox.style.padding;
+            const savedBg = previewBox.style.backgroundColor;
             previewBox.style.padding = '24px';
             previewBox.style.backgroundColor = pdfBgColor;
-            previewBox.style.whiteSpace = 'normal';
-            previewBox.style.letterSpacing = 'normal';
-            previewBox.style.wordBreak = 'normal';
-            previewBox.style.overflowWrap = 'normal';
-            previewBox.offsetHeight; // 强制重排
-
-            // 双约束计算 scale：维度上限 + 总像素上限，宁降分辨率不截断内容
-            const natWidth = previewBox.scrollWidth;
-            const natHeight = previewBox.scrollHeight;
-            const MAX_DIM   = 16384;       // Safari 单维度上限
-            const MAX_AREA  = 40000000;    // 40MP，Safari 67MP 下留安全余量
-            const area      = Math.max(natWidth * natHeight, 1);
-
-            const scaleByDim  = Math.floor(MAX_DIM / Math.max(natHeight, 1));
-            const scaleByArea = Math.floor(Math.sqrt(MAX_AREA / area));
-            const scale = Math.max(1, Math.min(4, scaleByDim, scaleByArea));
 
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
                 image: { type: 'png' },
                 pagebreak: { mode: ['css'] },
-                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor, windowWidth: natWidth },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
@@ -1094,15 +1069,15 @@ Type your Markdown code here..."></textarea>
                     pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
                 }
 
-                // 恢复原始样式
-                previewBox.style.padding = originals.padding || '40px';
-                previewBox.style.backgroundColor = originals.bg;
-                previewBox.style.whiteSpace = originals.ws;
-                previewBox.style.letterSpacing = originals.ls || '';
-                previewBox.style.wordBreak = originals.wb || '';
-                previewBox.style.overflowWrap = originals.ow || '';
-                textEls.forEach((el, i) => { el.style.whiteSpace = savedWs[i]; });
-                breakables.forEach((el, i) => { el.style.breakInside = savedBreak[i]; });
+                // 恢复
+                previewBox.style.padding = savedPad || '40px';
+                previewBox.style.backgroundColor = savedBg;
+                paras.forEach((el, i) => {
+                    el.style.whiteSpace = savedWs[i];
+                    el.style.breakInside = savedBi[i];
+                });
+            }).save();
+        }
             }).save();
         }
 
