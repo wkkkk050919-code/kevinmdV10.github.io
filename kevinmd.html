@@ -307,12 +307,6 @@
             <option value="#FAF0E6">📄 浅粉豆沙</option>
         </select>
 
-        <select id="pdf-quality-select" title="PDF 导出清晰度">
-            <option value="4">🔎 清晰度: 标准</option>
-            <option value="5">🔎 清晰度: 高清</option>
-            <option value="6">🔎 清晰度: 超清</option>
-        </select>
-
         <button onclick="exportMD()" class="btn-primary" title="下载 .md 源文件">⬇️ MD</button>
         <button onclick="exportPDF()" class="btn-danger" title="导出防裁切、带双语水印的 PDF">📥 PDF</button>
         <button onclick="exportWord()" class="btn-primary" title="导出为 Word 文档">📄 Word</button>
@@ -1039,7 +1033,6 @@ Type your Markdown code here..."></textarea>
 
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
-            const targetScale = parseInt(document.getElementById('pdf-quality-select').value, 10) || 4;
 
             // 保存原始样式
             const originals = {
@@ -1070,11 +1063,11 @@ Type your Markdown code here..."></textarea>
             previewBox.style.overflowWrap = 'normal';
             previewBox.offsetHeight; // 强制重排
 
-            // 动态 scale：默认 4，用户可选 5/6；超长文档自动回退，避免截断
+            // 动态 scale：默认 4（高清晰），逐级降 3→2 确保超长文档不截断
             const natH = previewBox.scrollHeight;
             const natW = previewBox.scrollWidth;
             const MAX_DIM = 16384, MAX_AREA = 40000000;
-            let scale = targetScale;
+            let scale = 4;
             while (scale > 2) {
                 if (scale * natH <= MAX_DIM && (scale * natW) * (scale * natH) <= MAX_AREA) break;
                 scale--;
