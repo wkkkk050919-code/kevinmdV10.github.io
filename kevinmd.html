@@ -251,6 +251,69 @@
             padding: 12px 24px; border-top: 1px solid rgba(0,0,0,0.06);
             font-size: 12px; color: #aaa; text-align: center;
         }
+
+        @media print {
+            @page { size: A4 portrait; margin: 15mm 15mm 30mm 15mm; }
+
+            html, body {
+                width: auto !important; height: auto !important; min-height: auto !important;
+                margin: 0 !important; padding: 0 !important; background: #fff !important;
+                color: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+
+            body {
+                display: block !important; overflow: visible !important; background-image: none !important;
+                text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+            }
+
+            .toolbar, .editor, .panel-header, .img-control-panel,
+            .img-modal, .img-modal-overlay, .auth-overlay, .history-overlay {
+                display: none !important;
+            }
+
+            .container, .panel {
+                display: block !important; width: auto !important; height: auto !important;
+                margin: 0 !important; padding: 0 !important; overflow: visible !important;
+                background: transparent !important; box-shadow: none !important; border: 0 !important;
+            }
+
+            .preview-content {
+                display: block !important; width: auto !important; max-width: none !important;
+                height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important;
+                background: transparent !important; box-shadow: none !important; border: 0 !important;
+                color: #111 !important; font-size: 11pt; line-height: 1.65;
+                text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+            }
+
+            .preview-content, .preview-content * {
+                text-shadow: none !important; filter: none !important; transform: none !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+
+            .preview-content p, .preview-content li {
+                white-space: normal !important; overflow-wrap: anywhere; word-break: normal;
+                orphans: 3; widows: 3;
+            }
+
+            .preview-content h1, .preview-content h2, .preview-content h3,
+            .preview-content h4, .preview-content h5, .preview-content h6 {
+                page-break-after: avoid; break-after: avoid; orphans: 3; widows: 3;
+            }
+
+            .preview-content img, .preview-content pre,
+            .preview-content blockquote, .preview-content tr {
+                page-break-inside: avoid; break-inside: avoid;
+            }
+
+            .preview-content img {
+                max-width: 100% !important; height: auto !important;
+                box-shadow: none !important; border-radius: 0 !important;
+            }
+
+            .preview-content pre {
+                overflow: visible !important; white-space: pre-wrap !important;
+            }
+        }
     </style>
 </head>
 <body class="font-sans">
@@ -308,7 +371,7 @@
         </select>
 
         <button onclick="exportMD()" class="btn-primary" title="下载 .md 源文件">⬇️ MD</button>
-        <button onclick="exportPDF()" class="btn-danger" title="导出防裁切、带双语水印的 PDF">📥 PDF</button>
+        <button onclick="exportPDF()" class="btn-danger" title="导出矢量文字、高清锐利的 PDF">📥 PDF</button>
         <button onclick="exportWord()" class="btn-primary" title="导出为 Word 文档">📄 Word</button>
 
         <!-- Auth buttons -->
@@ -511,8 +574,6 @@ Type your Markdown code here..."></textarea>
     <script src="https://fastly.jsdelivr.net/npm/highlight.js@11.8.0/lib/highlight.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
-
     <script>
         // ==================== API 配置 ====================
         const API_BASE = 'https://kevinmdv10-github-io.onrender.com/api';
@@ -1015,94 +1076,198 @@ Type your Markdown code here..."></textarea>
             a.href = url; a.download = 'Kevin_notes.md'; a.click(); URL.revokeObjectURL(url);
         }
 
-        function getWatermarkImage() {
-            const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 200;
-            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#a0a0a0'; ctx.textAlign = 'center';
-            ctx.font = '28px STSong, SimSun, sans-serif'; ctx.fillText('由Kevin设计的Markdown转写器生成，祝你生活愉快', 800, 80);
-            ctx.font = 'italic 24px STSong, SimSun, sans-serif'; ctx.fillText('Généré par le transcripteur Kevin Markdown. Bon courage à vous !', 800, 130);
-            return canvas.toDataURL('image/png');
+        function escapeAttribute(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
 
-        function exportPDF() {
-            if (typeof html2pdf === 'undefined') return alert("渲染引擎加载中，请稍候...");
+        function getPrintablePreviewHtml() {
+            const clone = previewBox.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.removeAttribute('contenteditable');
+            clone.removeAttribute('spellcheck');
+            clone.classList.add('print-document');
+            clone.querySelectorAll('.selected-img').forEach(el => el.classList.remove('selected-img'));
+            return clone.outerHTML;
+        }
+
+        function getPrintResourceHtml() {
+            const linkedStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .map(link => `<link rel="stylesheet" href="${escapeAttribute(link.href)}">`)
+                .join('\n');
+
+            const inlineStyles = Array.from(document.querySelectorAll('style'))
+                .map(style => `<style>${style.textContent}</style>`)
+                .join('\n');
+
+            return linkedStyles + '\n' + inlineStyles;
+        }
+
+        function buildVectorPrintHtml(filename, marginValue, pdfBgColor) {
+            const bottomMargin = marginValue + 16;
+            const printableHtml = getPrintablePreviewHtml();
+            const baseHref = document.baseURI || window.location.href;
+
+            const printCss = `
+                <style>
+                    @page { size: A4 portrait; margin: ${marginValue}mm ${marginValue}mm ${bottomMargin}mm ${marginValue}mm; }
+
+                    html, body {
+                        width: auto !important; height: auto !important; min-height: auto !important;
+                        margin: 0 !important; padding: 0 !important; background: ${pdfBgColor} !important;
+                        color: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                    }
+
+                    body {
+                        display: block !important; overflow: visible !important; background-image: none !important;
+                        text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+                    }
+
+                    .print-root {
+                        background: ${pdfBgColor} !important; color: #111 !important;
+                        min-height: 100vh; padding-bottom: 12mm;
+                    }
+
+                    .print-document {
+                        display: block !important; width: auto !important; max-width: none !important;
+                        height: auto !important; min-height: auto !important; overflow: visible !important;
+                        margin: 0 !important; padding: 0 !important; background: ${pdfBgColor} !important;
+                        box-shadow: none !important; border: 0 !important; outline: none !important;
+                        color: #111 !important; font-size: 11pt; line-height: 1.65;
+                        text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+                    }
+
+                    .print-document, .print-document * {
+                        text-shadow: none !important; filter: none !important; transform: none !important;
+                        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                    }
+
+                    .print-document p, .print-document li {
+                        white-space: normal !important; overflow-wrap: anywhere; word-break: normal;
+                        orphans: 3; widows: 3;
+                    }
+
+                    .print-document h1, .print-document h2, .print-document h3,
+                    .print-document h4, .print-document h5, .print-document h6 {
+                        page-break-after: avoid; break-after: avoid; orphans: 3; widows: 3;
+                    }
+
+                    .print-document img, .print-document pre,
+                    .print-document blockquote, .print-document tr {
+                        page-break-inside: avoid; break-inside: avoid;
+                    }
+
+                    .print-document img {
+                        max-width: 100% !important; height: auto !important;
+                        box-shadow: none !important; border-radius: 0 !important;
+                    }
+
+                    .print-document pre {
+                        overflow: visible !important; white-space: pre-wrap !important;
+                    }
+
+                    .print-watermark {
+                        position: fixed; left: 0; right: 0; bottom: 4mm;
+                        text-align: center; color: rgba(110, 110, 110, 0.72);
+                        font-size: 8pt; line-height: 1.35; letter-spacing: 0;
+                    }
+
+                    .print-watermark p { margin: 0; }
+                    .print-watermark p + p { font-style: italic; margin-top: 1mm; }
+                </style>
+            `;
+
+            return `<!DOCTYPE html>
+                <html lang="zh-CN">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${escapeHtml(filename)}</title>
+                    <base href="${escapeAttribute(baseHref)}">
+                    ${getPrintResourceHtml()}
+                    ${printCss}
+                </head>
+                <body>
+                    <main class="print-root">
+                        ${printableHtml}
+                        <footer class="print-watermark" aria-hidden="true">
+                            <p>由Kevin设计的Markdown转写器生成，祝你生活愉快</p>
+                            <p>Généré par le transcripteur Kevin Markdown. Bon courage à vous !</p>
+                        </footer>
+                    </main>
+                </body>
+                </html>`;
+        }
+
+        function waitForPrintAssets(frameDoc) {
+            const fontReady = frameDoc.fonts ? frameDoc.fonts.ready.catch(() => {}) : Promise.resolve();
+            const imageReady = Promise.all(Array.from(frameDoc.images).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }));
+
+            return Promise.all([fontReady, imageReady, new Promise(resolve => setTimeout(resolve, 250))]);
+        }
+
+        async function exportPDF() {
             if (!previewBox.innerHTML) return alert("请先输入内容");
 
             let customFilename = prompt("请输入导出的 PDF 文件名称（无需输入 .pdf 后缀）：", "Kevin_Document");
             if (customFilename === null) return;
             customFilename = customFilename.trim() === "" ? "Kevin_Document" : customFilename.trim();
+            customFilename = customFilename.replace(/[\\/:*?"<>|]+/g, "_");
 
-            const marginValue = parseFloat(document.getElementById('margin-select').value);
+            const rawMarginValue = parseFloat(document.getElementById('margin-select').value);
+            const marginValue = Number.isFinite(rawMarginValue) ? rawMarginValue : 15;
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
 
-            // 保存原始样式
-            const originals = {
-                padding: previewBox.style.padding,
-                bg: previewBox.style.backgroundColor,
-                ws: previewBox.style.whiteSpace,
-                ls: previewBox.style.letterSpacing,
-                wb: previewBox.style.wordBreak,
-                ow: previewBox.style.overflowWrap
+            const printFrame = document.createElement('iframe');
+            printFrame.setAttribute('title', 'PDF export');
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+            printFrame.style.opacity = '0';
+            printFrame.style.pointerEvents = 'none';
+
+            document.body.appendChild(printFrame);
+
+            const frameWindow = printFrame.contentWindow;
+            const frameDoc = printFrame.contentDocument || frameWindow.document;
+            let didPrint = false;
+
+            const cleanup = () => {
+                setTimeout(() => {
+                    if (printFrame.parentNode) printFrame.parentNode.removeChild(printFrame);
+                }, 1000);
             };
 
-            // 所有文本元素重置 white-space，防止 pre-wrap 导致画布文字测量偏差
-            const textEls = previewBox.querySelectorAll('p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, a, code, pre, div');
-            const savedWs = [];
-            textEls.forEach(el => { savedWs.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
-
-            // 段落自然跨页
-            const breakables = previewBox.querySelectorAll('p, li');
-            const savedBreak = [];
-            breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
-
-            // 样式重置 + 强制重排获取准确高度
-            previewBox.style.padding = '24px';
-            previewBox.style.backgroundColor = pdfBgColor;
-            previewBox.style.whiteSpace = 'normal';
-            previewBox.style.letterSpacing = 'normal';
-            previewBox.style.wordBreak = 'normal';
-            previewBox.style.overflowWrap = 'normal';
-            previewBox.offsetHeight; // 强制重排
-
-            // 动态 scale：默认 4（高清晰），逐级降 3→2 确保超长文档不截断
-            const natH = previewBox.scrollHeight;
-            const natW = previewBox.scrollWidth;
-            const MAX_DIM = 16384, MAX_AREA = 40000000;
-            let scale = 4;
-            while (scale > 2) {
-                if (scale * natH <= MAX_DIM && (scale * natW) * (scale * natH) <= MAX_AREA) break;
-                scale--;
-            }
-
-            const opt = {
-                margin: [marginValue, marginValue, marginValue + 15, marginValue],
-                filename: customFilename + '.pdf',
-                image: { type: 'png' },
-                pagebreak: { mode: ['avoid-all', 'css'] },
-                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-            };
-
-            html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
-                const watermarkImg = getWatermarkImage();
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
+            const printWhenReady = async () => {
+                if (didPrint) return;
+                didPrint = true;
+                try {
+                    await waitForPrintAssets(frameDoc);
+                } catch (e) {
+                    // 即使个别远程图片加载失败，也继续交给浏览器输出矢量文字 PDF。
                 }
+                frameWindow.focus();
+                frameWindow.addEventListener('afterprint', cleanup, { once: true });
+                frameWindow.print();
+                setTimeout(cleanup, 60000);
+            };
 
-                // 恢复原始样式
-                previewBox.style.padding = originals.padding || '40px';
-                previewBox.style.backgroundColor = originals.bg;
-                previewBox.style.whiteSpace = originals.ws;
-                previewBox.style.letterSpacing = originals.ls || '';
-                previewBox.style.wordBreak = originals.wb || '';
-                previewBox.style.overflowWrap = originals.ow || '';
-                textEls.forEach((el, i) => { el.style.whiteSpace = savedWs[i]; });
-                breakables.forEach((el, i) => { el.style.breakInside = savedBreak[i]; });
-            }).save();
+            printFrame.onload = printWhenReady;
+            frameDoc.open();
+            frameDoc.write(buildVectorPrintHtml(customFilename, marginValue, pdfBgColor));
+            frameDoc.close();
+            setTimeout(printWhenReady, 1200);
         }
 
         function exportWord() {
