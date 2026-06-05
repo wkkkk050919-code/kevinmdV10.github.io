@@ -1023,112 +1023,6 @@ Type your Markdown code here..."></textarea>
             return canvas.toDataURL('image/png');
         }
 
-        function mmToPx(mm) {
-            return mm * 96 / 25.4;
-        }
-
-        function createPdfExportClone(pdfBgColor, marginValue) {
-            const contentWidth = Math.max(320, mmToPx(210 - marginValue * 2));
-            const stage = document.createElement('div');
-            stage.style.position = 'fixed';
-            stage.style.left = '-12000px';
-            stage.style.top = '0';
-            stage.style.width = contentWidth + 'px';
-            stage.style.background = pdfBgColor;
-            stage.style.pointerEvents = 'none';
-            stage.style.zIndex = '-1';
-
-            const exportStyle = document.createElement('style');
-            exportStyle.textContent = `
-                .pdf-export-content {
-                    box-sizing: border-box !important;
-                    width: 100% !important;
-                    max-width: none !important;
-                    height: auto !important;
-                    overflow: visible !important;
-                    margin: 0 !important;
-                    padding: 24px !important;
-                    background: ${pdfBgColor} !important;
-                    scroll-behavior: auto !important;
-                    letter-spacing: normal !important;
-                    word-break: normal !important;
-                    overflow-wrap: break-word !important;
-                }
-                .pdf-export-content p,
-                .pdf-export-content li,
-                .pdf-export-content td,
-                .pdf-export-content th,
-                .pdf-export-content blockquote,
-                .pdf-export-content h1,
-                .pdf-export-content h2,
-                .pdf-export-content h3,
-                .pdf-export-content h4,
-                .pdf-export-content h5,
-                .pdf-export-content h6 {
-                    white-space: normal !important;
-                    word-break: normal !important;
-                    overflow-wrap: break-word !important;
-                }
-                .pdf-export-content .katex,
-                .pdf-export-content .katex * {
-                    white-space: nowrap !important;
-                }
-                .pdf-export-content .katex-display {
-                    overflow: visible !important;
-                    page-break-inside: avoid;
-                    break-inside: avoid;
-                }
-                .pdf-export-content h1,
-                .pdf-export-content h2,
-                .pdf-export-content h3 {
-                    page-break-after: avoid;
-                    break-after: avoid;
-                }
-                .pdf-export-content pre,
-                .pdf-export-content table,
-                .pdf-export-content img,
-                .pdf-export-content blockquote {
-                    page-break-inside: avoid;
-                    break-inside: avoid;
-                }
-                .pdf-export-content pre {
-                    white-space: pre-wrap !important;
-                    overflow: visible !important;
-                }
-                .pdf-export-content img {
-                    max-width: 100% !important;
-                    height: auto !important;
-                    box-shadow: none !important;
-                }
-            `;
-
-            const clone = previewBox.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.removeAttribute('contenteditable');
-            clone.removeAttribute('spellcheck');
-            clone.classList.add('pdf-export-content');
-            clone.querySelectorAll('.selected-img').forEach(el => el.classList.remove('selected-img'));
-
-            stage.appendChild(exportStyle);
-            stage.appendChild(clone);
-            document.body.appendChild(stage);
-            clone.offsetHeight;
-
-            return { stage, clone };
-        }
-
-        function getPdfScale(exportNode) {
-            const natH = exportNode.scrollHeight;
-            const natW = exportNode.scrollWidth;
-            const MAX_DIM = 16384, MAX_AREA = 40000000;
-            let scale = 4;
-            while (scale > 2) {
-                if (scale * natH <= MAX_DIM && (scale * natW) * (scale * natH) <= MAX_AREA) break;
-                scale--;
-            }
-            return scale;
-        }
-
         function exportPDF() {
             if (typeof html2pdf === 'undefined') return alert("渲染引擎加载中，请稍候...");
             if (!previewBox.innerHTML) return alert("请先输入内容");
@@ -1139,25 +1033,56 @@ Type your Markdown code here..."></textarea>
 
             const marginValue = parseFloat(document.getElementById('margin-select').value);
             const pdfBgColor = document.getElementById('pdf-bg-select').value;
-            const exportClone = createPdfExportClone(pdfBgColor, marginValue);
-            const scale = getPdfScale(exportClone.clone);
+
+            // 保存原始样式
+            const originals = {
+                padding: previewBox.style.padding,
+                bg: previewBox.style.backgroundColor,
+                ws: previewBox.style.whiteSpace,
+                ls: previewBox.style.letterSpacing,
+                wb: previewBox.style.wordBreak,
+                ow: previewBox.style.overflowWrap
+            };
+
+            // 所有文本元素重置 white-space，防止 pre-wrap 导致画布文字测量偏差
+            const textEls = previewBox.querySelectorAll('p, li, td, th, blockquote, h1, h2, h3, h4, h5, h6, span, a, code, pre, div');
+            const savedWs = [];
+            textEls.forEach(el => { savedWs.push(el.style.whiteSpace); el.style.whiteSpace = 'normal'; });
+
+            // 段落自然跨页
+            const breakables = previewBox.querySelectorAll('p, li');
+            const savedBreak = [];
+            breakables.forEach(el => { savedBreak.push(el.style.breakInside); el.style.breakInside = 'auto'; });
+
+            // 样式重置 + 强制重排获取准确高度
+            previewBox.style.padding = '24px';
+            previewBox.style.backgroundColor = pdfBgColor;
+            previewBox.style.whiteSpace = 'normal';
+            previewBox.style.letterSpacing = 'normal';
+            previewBox.style.wordBreak = 'normal';
+            previewBox.style.overflowWrap = 'normal';
+            previewBox.offsetHeight; // 强制重排
+
+            // 动态 scale：默认 4（高清晰），逐级降 3→2 确保超长文档不截断
+            const natH = previewBox.scrollHeight;
+            const natW = previewBox.scrollWidth;
+            const MAX_DIM = 16384, MAX_AREA = 40000000;
+            let scale = 4;
+            while (scale > 2) {
+                if (scale * natH <= MAX_DIM && (scale * natW) * (scale * natH) <= MAX_AREA) break;
+                scale--;
+            }
 
             const opt = {
                 margin: [marginValue, marginValue, marginValue + 15, marginValue],
                 filename: customFilename + '.pdf',
-                image: { type: 'png', quality: 1 },
-                pagebreak: { mode: ['css', 'legacy'] },
-                html2canvas: {
-                    scale: scale,
-                    useCORS: true,
-                    letterRendering: false,
-                    backgroundColor: pdfBgColor,
-                    windowWidth: exportClone.clone.scrollWidth
-                },
+                image: { type: 'png' },
+                pagebreak: { mode: ['avoid-all', 'css'] },
+                html2canvas: { scale: scale, useCORS: true, letterRendering: false, backgroundColor: pdfBgColor },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };
 
-            html2pdf().set(opt).from(exportClone.clone).toPdf().get('pdf').then(function (pdf) {
+            html2pdf().set(opt).from(previewBox).toPdf().get('pdf').then(function (pdf) {
                 const totalPages = pdf.internal.getNumberOfPages();
                 const watermarkImg = getWatermarkImage();
                 const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -1167,13 +1092,17 @@ Type your Markdown code here..."></textarea>
                     pdf.setPage(i);
                     pdf.addImage(watermarkImg, 'PNG', (pdfWidth - 140) / 2, pdfHeight - 20, 140, 17.5);
                 }
-            }).save().then(function () {
-                exportClone.stage.remove();
-            }).catch(function (err) {
-                exportClone.stage.remove();
-                console.error(err);
-                alert("PDF 导出失败，请刷新页面后重试。");
-            });
+
+                // 恢复原始样式
+                previewBox.style.padding = originals.padding || '40px';
+                previewBox.style.backgroundColor = originals.bg;
+                previewBox.style.whiteSpace = originals.ws;
+                previewBox.style.letterSpacing = originals.ls || '';
+                previewBox.style.wordBreak = originals.wb || '';
+                previewBox.style.overflowWrap = originals.ow || '';
+                textEls.forEach((el, i) => { el.style.whiteSpace = savedWs[i]; });
+                breakables.forEach((el, i) => { el.style.breakInside = savedBreak[i]; });
+            }).save();
         }
 
         function exportWord() {
